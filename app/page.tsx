@@ -293,7 +293,7 @@ export default function Home() {
                   <div style={S.cardHeader}>
                     <span style={S.cardTitle}>Ajouter un repas</span>
                   </div>
-                  <div className="acm-grid4">
+                  <div className="acm-grid2">
                     <div>
                       <label style={S.label}>Salarié</label>
                       <SearchInput value={mForm.empSearch} onChange={v => setMForm(f => ({ ...f, empSearch: v, employeeId: '' }))} placeholder="Filtrer les salariés…" />
@@ -303,19 +303,24 @@ export default function Home() {
                       </select>
                     </div>
                     <div>
-                      <label style={S.label}>Date du repas</label>
-                      <input type="date" style={S.input} value={mForm.date} onChange={e => setMForm(f => ({ ...f, date: e.target.value }))} />
-                    </div>
-                    <div>
-                      <label style={S.label}>Mois de rattachement <span style={{ color: 'var(--secondary)', fontWeight: 700, textTransform: 'none', letterSpacing: 0, fontSize: 10 }}>●</span></label>
-                      <input type="month" style={S.input} value={mForm.targetMonth} onChange={e => setMForm(f => ({ ...f, targetMonth: e.target.value }))} />
-                    </div>
-                    <div>
                       <label style={S.label}>Type de repas</label>
                       <select style={S.input} value={mForm.type} onChange={e => setMForm(f => ({ ...f, type: e.target.value as 'paye' | 'invite', invites: [] }))}>
                         <option value="paye">Payé par le salarié</option>
                         <option value="invite">En tant qu'invité</option>
                       </select>
+                    </div>
+                  </div>
+                  <div className="acm-grid2">
+                    <div>
+                      <label style={S.label}>Date du repas</label>
+                      <input type="date" style={S.input} value={mForm.date} onChange={e => setMForm(f => ({ ...f, date: e.target.value }))} />
+                    </div>
+                    <div>
+                      <label style={{ ...S.label, display: 'flex', alignItems: 'center', gap: 5 }}>
+                        Mois de rattachement
+                        <span style={{ background: 'var(--secondary)', color: '#fff', fontSize: 9, fontWeight: 700, padding: '1px 5px', borderRadius: 4, textTransform: 'none', letterSpacing: 0 }}>comptable</span>
+                      </label>
+                      <input type="month" style={S.input} value={mForm.targetMonth} onChange={e => setMForm(f => ({ ...f, targetMonth: e.target.value }))} />
                     </div>
                   </div>
 
