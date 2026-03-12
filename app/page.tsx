@@ -84,7 +84,7 @@ export default function Home() {
     employeeId: '', date: new Date().toISOString().slice(0, 10),
     type: 'paye' as 'paye' | 'invite', invites: [] as string[],
     commentaire: '', commentaireColor: '#0f172a', countColor: '#00336B',
-    empSearch: ''
+    empSearch: '', inviteSearch: ''
   })
   const [editMeal, setEditMeal] = useState<Meal | null>(null)
   const [eForm, setEForm] = useState({ nom: '', prenom: '' })
@@ -152,7 +152,7 @@ export default function Home() {
     }
     const { error } = await supabase.from('meals').insert(inserts)
     if (error) { showToast('Erreur lors de l\'enregistrement', 'err'); return }
-    setMForm(f => ({ ...f, employeeId: '', invites: [], commentaire: '', empSearch: '' }))
+    setMForm(f => ({ ...f, employeeId: '', invites: [], commentaire: '', empSearch: '', inviteSearch: '' }))
     showToast(`${inserts.length} repas enregistré${inserts.length > 1 ? 's' : ''} ✓`)
     fetchAll()
   }
@@ -325,14 +325,59 @@ export default function Home() {
 
                   {mForm.type === 'paye' && mForm.employeeId && (
                     <div style={{ marginBottom: 16 }}>
-                      <label style={S.label}>Personnes invitées <span style={{ color: 'var(--text3)', fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>— cliquer pour sélectionner</span></label>
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 8 }}>
-                        {employees.filter(e => e.id !== mForm.employeeId).map(e => (
-                          <button key={e.id} type="button" onClick={() => toggleInvite(e.id)} style={{ padding: '6px 14px', borderRadius: 20, fontSize: 13, fontWeight: 500, cursor: 'pointer', transition: 'all .15s', border: mForm.invites.includes(e.id) ? '1.5px solid var(--secondary)' : '1.5px solid var(--border2)', background: mForm.invites.includes(e.id) ? 'var(--secondary-light)' : 'var(--bg2)', color: mForm.invites.includes(e.id) ? '#3a4a00' : 'var(--text2)' }}>
-                            {mForm.invites.includes(e.id) ? '✓ ' : ''}{e.prenom} {e.nom}
-                          </button>
-                        ))}
+                      <label style={S.label}>Personnes invitées</label>
+
+                      {/* Tags des invités sélectionnés */}
+                      {mForm.invites.length > 0 && (
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>
+                          {mForm.invites.map(id => {
+                            const emp = employees.find(e => e.id === id)
+                            if (!emp) return null
+                            return (
+                              <span key={id} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 10px 4px 12px', borderRadius: 20, fontSize: 13, fontWeight: 500, background: 'var(--secondary-light)', color: '#3a4a00', border: '1.5px solid #c5d96e' }}>
+                                {emp.prenom} {emp.nom}
+                                <button type="button" onClick={() => toggleInvite(id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#3a4a00', fontSize: 14, lineHeight: 1, padding: '0 2px', opacity: 0.7 }}>×</button>
+                              </span>
+                            )
+                          })}
+                        </div>
+                      )}
+
+                      {/* Barre de recherche + suggestions */}
+                      <div style={{ position: 'relative', maxWidth: 360 }}>
+                        <SearchInput
+                          value={mForm.inviteSearch}
+                          onChange={v => setMForm(f => ({ ...f, inviteSearch: v }))}
+                          placeholder="Rechercher un invité…"
+                        />
+                        {mForm.inviteSearch.trim().length > 0 && (() => {
+                          const results = employees.filter(e =>
+                            e.id !== mForm.employeeId &&
+                            !mForm.invites.includes(e.id) &&
+                            (e.prenom + ' ' + e.nom).toLowerCase().includes(mForm.inviteSearch.toLowerCase())
+                          )
+                          if (results.length === 0) return (
+                            <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 50, marginTop: 4, background: 'var(--bg)', border: '1px solid var(--border2)', borderRadius: 'var(--radius-sm)', padding: '10px 14px', fontSize: 13, color: 'var(--text3)', boxShadow: 'var(--shadow-md)' }}>
+                              Aucun résultat
+                            </div>
+                          )
+                          return (
+                            <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 50, marginTop: 4, background: 'var(--bg)', border: '1px solid var(--border2)', borderRadius: 'var(--radius-sm)', boxShadow: 'var(--shadow-md)', maxHeight: 220, overflowY: 'auto' }}>
+                              {results.map(e => (
+                                <button key={e.id} type="button"
+                                  onClick={() => { toggleInvite(e.id); setMForm(f => ({ ...f, inviteSearch: '' })) }}
+                                  style={{ display: 'block', width: '100%', textAlign: 'left', padding: '9px 14px', background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, color: 'var(--text)', borderBottom: '1px solid var(--border)' }}
+                                  onMouseEnter={ev => (ev.currentTarget.style.background = 'var(--primary-light)')}
+                                  onMouseLeave={ev => (ev.currentTarget.style.background = 'none')}
+                                >
+                                  {e.prenom} {e.nom}
+                                </button>
+                              ))}
+                            </div>
+                          )
+                        })()}
                       </div>
+
                       {mForm.invites.length > 0 && (
                         <div style={{ marginTop: 10, fontSize: 12, color: 'var(--primary)', background: 'var(--primary-light)', borderRadius: 6, padding: '8px 12px', fontWeight: 500 }}>
                           → {mForm.invites.length} entrée{mForm.invites.length > 1 ? 's' : ''} «invité» créées automatiquement
