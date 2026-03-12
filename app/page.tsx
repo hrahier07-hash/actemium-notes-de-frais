@@ -56,12 +56,12 @@ function ColorPicker({ value, onChange, label }: { value: string; onChange: (c: 
   )
 }
 
-function SearchInput({ value, onChange, placeholder }: { value: string; onChange: (v: string) => void; placeholder?: string }) {
+function SearchInput({ value, onChange, placeholder, inputStyle }: { value: string; onChange: (v: string) => void; placeholder?: string; inputStyle?: React.CSSProperties }) {
   return (
     <div style={{ position: 'relative' }}>
-      <span style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--text2)', fontSize: 14, pointerEvents: 'none', opacity: 1 }}>⌕</span>
+      <span style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--primary)', fontSize: 14, pointerEvents: 'none', opacity: 1, fontWeight: 600 }}>⌕</span>
       <input
-        style={{ ...S.input, paddingLeft: 30 }}
+        style={{ ...S.input, paddingLeft: 30, ...inputStyle }}
         placeholder={placeholder || 'Rechercher un salarié…'}
         value={value}
         onChange={e => onChange(e.target.value)}
@@ -335,10 +335,7 @@ export default function Home() {
                       <input type="date" style={S.input} value={mForm.date} onChange={e => setMForm(f => ({ ...f, date: e.target.value }))} />
                     </div>
                     <div>
-                      <label style={{ ...S.label, display: 'flex', alignItems: 'center', gap: 5 }}>
-                        Mois de rattachement
-                        <span style={{ background: 'var(--secondary)', color: '#fff', fontSize: 9, fontWeight: 700, padding: '1px 5px', borderRadius: 4, textTransform: 'none', letterSpacing: 0 }}>comptable</span>
-                      </label>
+                      <label style={S.label}>Mois de rattachement</label>
                       <input type="month" style={S.input} value={mForm.targetMonth} onChange={e => setMForm(f => ({ ...f, targetMonth: e.target.value }))} />
                     </div>
                   </div>
@@ -348,7 +345,7 @@ export default function Home() {
                       <label style={S.label}>Commentaire <span style={{ color: 'var(--text3)', fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>(laissez vide pour auto)</span></label>
                       <input style={S.input} value={mForm.commentaire} placeholder={genCommentaire(mForm.type, mForm.date)} onChange={e => setMForm(f => ({ ...f, commentaire: e.target.value }))} />
                     </div>
-                    <div className="acm-colors">
+                    <div className="acm-colors" style={{ alignItems: 'flex-end' }}>
                       <ColorPicker label="Couleur commentaire" value={mForm.commentaireColor} onChange={c => setMForm(f => ({ ...f, commentaireColor: c }))} />
                       <div>
                         <label style={S.label}>Imputation</label>
@@ -525,7 +522,7 @@ export default function Home() {
                           const total = s.paye + s.invite
                           const countColor = monthMeals.find(m => m.employee_id === e.id)?.count_color || 'var(--primary)'
                           return (
-                            <div key={e.id} style={{ ...S.summaryRow, background: (() => { const c = countColor.startsWith('#') ? countColor : '#a8e6a3'; const h=c.replace('#',''); const r=parseInt(h.slice(0,2),16),g=parseInt(h.slice(2,4),16),b=parseInt(h.slice(4,6),16); return `rgba(${r},${g},${b},0.18)` })() }}>
+                            <div key={e.id} style={S.summaryRow}>
                               <span style={{ fontWeight: 600, color: 'var(--text)', fontSize: 13 }}>{e.prenom} {e.nom}</span>
                               <span style={{ textAlign: 'center', fontWeight: 700, fontSize: 15, color: '#0c1524' }}>{s.paye}</span>
                               <span style={{ textAlign: 'center', fontWeight: 700, fontSize: 15, color: '#0c1524' }}>{s.invite}</span>
@@ -552,12 +549,12 @@ export default function Home() {
                       {/* filtres */}
                       <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 14, alignItems: 'center' }}>
                         <div style={{ flex: '1 1 180px', maxWidth: 260 }}>
-                          <SearchInput value={monthSearch} onChange={setMonthSearch} placeholder="Filtrer par salarié…" />
+                          <SearchInput value={monthSearch} onChange={setMonthSearch} placeholder="Filtrer par salarié…" inputStyle={{ borderColor: 'var(--border2)', color: 'var(--text)' }} />
                         </div>
                         <div style={{ flex: '1 1 160px', maxWidth: 220 }}>
-                          <SearchInput value={detailCommentSearch} onChange={setDetailCommentSearch} placeholder="Filtrer par commentaire…" />
+                          <SearchInput value={detailCommentSearch} onChange={setDetailCommentSearch} placeholder="Filtrer par commentaire…" inputStyle={{ borderColor: 'var(--border2)', color: 'var(--text)' }} />
                         </div>
-                        <select style={{ ...S.input, width: 'auto', padding: '7px 12px', fontSize: 13 }}
+                        <select style={{ ...S.input, width: 'auto', padding: '7px 12px', fontSize: 13, borderColor: 'var(--border2)', color: 'var(--text)' }}
                           value={detailTypeFilter} onChange={e => setDetailTypeFilter(e.target.value as typeof detailTypeFilter)}>
                           <option value="all">Tous les types</option>
                           <option value="paye">Payé uniquement</option>
