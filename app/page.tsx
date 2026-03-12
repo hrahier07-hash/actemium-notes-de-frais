@@ -72,6 +72,17 @@ function SearchInput({ value, onChange, placeholder }: { value: string; onChange
 
 type Tab = 'saisie' | 'mensuel' | 'salaries'
 
+const IMPUTATIONS = [
+  { label: 'Vélizy',     color: '#a8e6a3' },
+  { label: 'Chanteloup', color: '#a3d4f5' },
+  { label: 'Verneuil',   color: '#fde89a' },
+  { label: 'Cantine',    color: '#f5b8c8' },
+] as const
+
+function getImputation(color: string | null | undefined) {
+  return IMPUTATIONS.find(i => i.color === color) || IMPUTATIONS[0]
+}
+
 export default function Home() {
   const [tab, setTab] = useState<Tab>('saisie')
   const [employees, setEmployees] = useState<Employee[]>([])
@@ -227,19 +238,11 @@ export default function Home() {
                 <ColorPicker label="Couleur commentaire" value={editMeal.commentaire_color || '#0f172a'} onChange={c => setEditMeal(m => m ? { ...m, commentaire_color: c } : m)} />
                 <div>
                         <label style={S.label}>Imputation</label>
-                        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 4 }}>
-                          {([
-                            { label: 'Vélizy',     color: '#a8e6a3' },
-                            { label: 'Chanteloup', color: '#a3d4f5' },
-                            { label: 'Verneuil',   color: '#fde89a' },
-                            { label: 'Cantine',    color: '#f5b8c8' },
-                          ] as { label: string; color: string }[]).map(imp => (
-                            <button key={imp.label} type="button"
-                              onClick={() => setEditMeal(m => m ? { ...m, count_color: imp.color } : m)}
-                              style={{ padding: '4px 10px', borderRadius: 20, fontSize: 12, fontWeight: editMeal.count_color === imp.color ? 700 : 500, cursor: 'pointer', border: editMeal.count_color === imp.color ? '2px solid #555' : '2px solid transparent', background: imp.color, color: '#333', transition: 'all .15s', boxShadow: editMeal.count_color === imp.color ? '0 0 0 2px rgba(0,0,0,.15)' : 'none' }}>
-                              {imp.label}
-                            </button>
-                          ))}
+                        <div style={{ position: 'relative' }}>
+                          <div style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', width: 14, height: 14, borderRadius: 4, background: editMeal.count_color || '#a8e6a3', border: '1px solid rgba(0,0,0,.12)', pointerEvents: 'none', zIndex: 1 }} />
+                          <select style={{ ...S.input, paddingLeft: 32 }} value={editMeal.count_color || '#a8e6a3'} onChange={e => setEditMeal(m => m ? { ...m, count_color: e.target.value } : m)}>
+                            {IMPUTATIONS.map(imp => <option key={imp.label} value={imp.color}>{imp.label}</option>)}
+                          </select>
                         </div>
                       </div>
               </div>
@@ -349,19 +352,11 @@ export default function Home() {
                       <ColorPicker label="Couleur commentaire" value={mForm.commentaireColor} onChange={c => setMForm(f => ({ ...f, commentaireColor: c }))} />
                       <div>
                         <label style={S.label}>Imputation</label>
-                        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 4 }}>
-                          {([
-                            { label: 'Vélizy',     color: '#a8e6a3' },
-                            { label: 'Chanteloup', color: '#a3d4f5' },
-                            { label: 'Verneuil',   color: '#fde89a' },
-                            { label: 'Cantine',    color: '#f5b8c8' },
-                          ] as { label: string; color: string }[]).map(imp => (
-                            <button key={imp.label} type="button"
-                              onClick={() => setMForm(f => ({ ...f, countColor: imp.color }))}
-                              style={{ padding: '4px 10px', borderRadius: 20, fontSize: 12, fontWeight: mForm.countColor === imp.color ? 700 : 500, cursor: 'pointer', border: mForm.countColor === imp.color ? '2px solid #555' : '2px solid transparent', background: imp.color, color: '#333', transition: 'all .15s', boxShadow: mForm.countColor === imp.color ? '0 0 0 2px rgba(0,0,0,.15)' : 'none' }}>
-                              {imp.label}
-                            </button>
-                          ))}
+                        <div style={{ position: 'relative' }}>
+                          <div style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', width: 14, height: 14, borderRadius: 4, background: mForm.countColor, border: '1px solid rgba(0,0,0,.12)', pointerEvents: 'none', zIndex: 1 }} />
+                          <select style={{ ...S.input, paddingLeft: 32 }} value={mForm.countColor} onChange={e => setMForm(f => ({ ...f, countColor: e.target.value }))}>
+                            {IMPUTATIONS.map(imp => <option key={imp.label} value={imp.color}>{imp.label}</option>)}
+                          </select>
                         </div>
                       </div>
                     </div>
@@ -609,11 +604,12 @@ export default function Home() {
                                 {empMeals.map(m => {
                                   const fmtDate = m.date ? new Date(m.date + 'T12:00:00').toLocaleDateString('fr-FR') : ''
                                   const isPaye = m.type === 'paye'
+                                  const impColor = m.count_color || '#a8e6a3'
                                   return (
-                                    <div key={m.id} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 6px 4px 10px', borderRadius: 8, fontSize: 12, background: isPaye ? 'var(--secondary-light)' : 'var(--primary-light)', border: isPaye ? '1px solid #c5d96e' : '1px solid #b3cceb', color: isPaye ? '#3a4a00' : 'var(--primary)' }}>
-                                      <span style={{ fontSize: 11, opacity: 0.7, fontWeight: 500 }}>{fmtDate}</span>
-                                      <span style={{ fontWeight: 600, fontSize: 11, padding: '1px 6px', borderRadius: 10, background: isPaye ? '#c5d96e' : '#b3cceb' }}>{isPaye ? 'Payé' : 'Invité'}</span>
-                                      {m.commentaire && <span style={{ color: m.commentaire_color || 'var(--text2)' }}>{m.commentaire}</span>}
+                                    <div key={m.id} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 6px 4px 10px', borderRadius: 8, fontSize: 12, background: impColor, border: `1px solid rgba(0,0,0,.10)`, color: '#1a2a1a' }}>
+                                      <span style={{ fontSize: 11, opacity: 0.65, fontWeight: 500 }}>{fmtDate}</span>
+                                      <span style={{ fontWeight: 700, fontSize: 11, padding: '1px 8px', borderRadius: 10, background: 'rgba(0,0,0,.12)', color: '#111' }}>{isPaye ? 'Payé' : 'Invité'}</span>
+                                      {m.commentaire && <span style={{ color: m.commentaire_color || '#333' }}>{m.commentaire}</span>}
                                       <button onClick={() => setEditMeal(m)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0 2px', opacity: 0.5, fontSize: 13, lineHeight: 1 }} title="Modifier">✎</button>
                                       <button onClick={() => deleteMeal(m.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0 2px', opacity: 0.5, color: 'var(--red)', fontSize: 13, lineHeight: 1 }} title="Supprimer">×</button>
                                     </div>
@@ -625,6 +621,15 @@ export default function Home() {
                         })
                       })()}
                     </div>
+                  {/* ── Légende imputations ── */}
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center', padding: '12px 0', marginTop: 4 }}>
+                    <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '.06em', marginRight: 4 }}>Légende</span>
+                    {IMPUTATIONS.map(imp => (
+                      <div key={imp.label} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '4px 12px', borderRadius: 20, background: imp.color, border: '1px solid rgba(0,0,0,.08)', fontSize: 12, fontWeight: 600, color: '#1a1a1a' }}>
+                        {imp.label}
+                      </div>
+                    ))}
+                  </div>
                   </>
                 )}
               </div>
