@@ -129,7 +129,7 @@ input, select, button, textarea { font-family: inherit; }
 .acm-grid3   { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 16px; }
 .acm-grid4   { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 16px; margin-bottom: 16px; }
 .acm-grid2   { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
-.acm-colors  { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; align-items: flex-end; }
+.acm-colors  { display: grid; grid-template-columns: 1fr 1.6fr; gap: 12px; align-items: flex-end; }
 .acm-emp-form{ display: grid; grid-template-columns: 1fr 1fr auto; gap: 12px; align-items: flex-end; margin-top: 16px; }
 .acm-tbl     { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 
