@@ -530,6 +530,22 @@ export default function Home() {
                             </div>
                           )
                         })}
+                        {/* ── Ligne totaux ── */}
+                        {(() => {
+                          const visibleEmps = [...filteredEmpForMonth].filter(e => { const s = summary[e.id] || { paye: 0, invite: 0 }; return (s.paye + s.invite) > 0 })
+                          const totalPaye = visibleEmps.reduce((acc, e) => acc + (summary[e.id]?.paye || 0), 0)
+                          const totalInvite = visibleEmps.reduce((acc, e) => acc + (summary[e.id]?.invite || 0), 0)
+                          const totalAll = totalPaye + totalInvite
+                          if (visibleEmps.length === 0) return null
+                          return (
+                            <div style={{ ...S.summaryRow, borderTop: '2px solid var(--primary)', borderBottom: 'none', background: 'var(--primary-light)', marginTop: 2 }}>
+                              <span style={{ fontWeight: 700, color: 'var(--primary)', fontSize: 13, textTransform: 'uppercase', letterSpacing: '.04em' }}>Total</span>
+                              <span style={{ textAlign: 'center', fontWeight: 800, fontSize: 16, color: 'var(--primary)' }}>{totalPaye}</span>
+                              <span style={{ textAlign: 'center', fontWeight: 800, fontSize: 16, color: 'var(--primary)' }}>{totalInvite}</span>
+                              <span style={{ textAlign: 'center', fontWeight: 900, fontSize: 18, color: 'var(--primary)' }}>{totalAll}</span>
+                            </div>
+                          )
+                        })()}
                     </div>
 
                     {/* ── Tableau de détail groupé par salarié ── */}
