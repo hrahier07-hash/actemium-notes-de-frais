@@ -59,7 +59,7 @@ function ColorPicker({ value, onChange, label }: { value: string; onChange: (c: 
 function SearchInput({ value, onChange, placeholder }: { value: string; onChange: (v: string) => void; placeholder?: string }) {
   return (
     <div style={{ position: 'relative' }}>
-      <span style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--text3)', fontSize: 14, pointerEvents: 'none' }}>⌕</span>
+      <span style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--text2)', fontSize: 14, pointerEvents: 'none', opacity: 1 }}>⌕</span>
       <input
         style={{ ...S.input, paddingLeft: 30 }}
         placeholder={placeholder || 'Rechercher un salarié…'}
@@ -499,10 +499,10 @@ export default function Home() {
                             <span key={k}
                               onClick={() => setSummarySort(prev => ({ key: k, dir: prev.key === k && prev.dir === 'asc' ? 'desc' : 'asc' }))}
                               style={{ cursor: 'pointer', userSelect: 'none', display: 'flex', alignItems: 'center', gap: 4,
-                                color: active ? 'var(--primary)' : 'var(--text3)',
+                                color: 'var(--primary)',
                                 justifyContent: k === 'nom' ? 'flex-start' : 'center' }}>
                               {label}
-                              <span style={{ fontSize: 10, opacity: active ? 1 : 0.4 }}>
+                              <span style={{ fontSize: 10, opacity: active ? 1 : 0.6 }}>
                                 {active ? (summarySort.dir === 'asc' ? '▲' : '▼') : '⇅'}
                               </span>
                             </span>
@@ -740,7 +740,7 @@ const S = {
   tableHead: { display: 'grid', gridTemplateColumns: 'clamp(90px,10%,130px) 1fr clamp(70px,8%,100px) 1fr clamp(60px,7%,80px)', gap: 12, padding: '6px 0 10px', borderBottom: '1px solid var(--border)', fontSize: 11, fontWeight: 600, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '.05em' } as React.CSSProperties,
   tableRow: { display: 'grid', gridTemplateColumns: 'clamp(90px,10%,130px) 1fr clamp(70px,8%,100px) 1fr clamp(60px,7%,80px)', gap: 12, alignItems: 'center', padding: '11px 0', borderBottom: '1px solid var(--border)' } as React.CSSProperties,
   summaryCard: { background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 14, padding: '18px 22px', boxShadow: '0 1px 3px rgba(0,0,0,.06), 0 4px 12px rgba(0,51,107,.04)', borderLeft: '3px solid var(--secondary)' } as React.CSSProperties,
-  summaryHead: { display: 'grid', gridTemplateColumns: '1fr 80px 80px 80px', gap: 12, padding: '8px 16px 10px', borderBottom: '1.5px solid var(--border)', fontSize: 11, fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '.07em' } as React.CSSProperties,
+  summaryHead: { display: 'grid', gridTemplateColumns: '1fr 80px 80px 80px', gap: 12, padding: '8px 16px 10px', borderBottom: '1.5px solid var(--border)', fontSize: 11, fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '.07em', color: 'var(--primary)' } as React.CSSProperties,
   summaryRow: { display: 'grid', gridTemplateColumns: '1fr 80px 80px 80px', gap: 12, alignItems: 'center', padding: '11px 16px', borderBottom: '1px solid var(--border)', transition: 'background .1s' } as React.CSSProperties,
   emptyState: { textAlign: 'center', padding: '40px 0', color: 'var(--text3)', fontSize: 13 } as React.CSSProperties,
   overlay: { position: 'fixed', inset: 0, background: 'rgba(8,15,35,.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, backdropFilter: 'blur(6px)' } as React.CSSProperties,
