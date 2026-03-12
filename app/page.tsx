@@ -92,6 +92,11 @@ export default function Home() {
   const [toast, setToast] = useState<{ msg: string; type: 'ok' | 'err' }>({ msg: '', type: 'ok' })
   const [monthSearch, setMonthSearch] = useState('')
   const [empSearch, setEmpSearch] = useState('')
+  const [monthSort, setMonthSort] = useState<{ key: 'date' | 'emp' | 'type' | 'comment'; dir: 'asc' | 'desc' }>({ key: 'date', dir: 'asc' })
+  const [summarySort, setSummarySort] = useState<{ key: 'nom' | 'paye' | 'invite' | 'total'; dir: 'asc' | 'desc' }>({ key: 'nom', dir: 'asc' })
+  const [detailTypeFilter, setDetailTypeFilter] = useState<'all' | 'paye' | 'invite'>('all')
+  const [detailCommentSearch, setDetailCommentSearch] = useState('')
+  const [confirmDelEmp, setConfirmDelEmp] = useState<Employee | null>(null)
 
   function showToast(msg: string, type: 'ok' | 'err' = 'ok') {
     setToast({ msg, type })
@@ -172,8 +177,8 @@ export default function Home() {
   }
 
   async function deleteEmployee(id: string) {
-    await supabase.from('employees').update({ actif: false }).eq('id', id)
-    showToast('Salarié supprimé'); fetchAll()
+    await supabase.from('employees').delete().eq('id', id)
+    setConfirmDelEmp(null); showToast('Salarié supprimé'); fetchAll()
   }
 
   function toggleInvite(id: string) {
@@ -223,6 +228,27 @@ export default function Home() {
                 <button style={S.btnGhost} onClick={() => setEditMeal(null)}>Annuler</button>
                 <button style={S.btnPrimary} onClick={saveEditMeal}>Enregistrer</button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {confirmDelEmp && (
+        <div style={S.overlay} onClick={() => setConfirmDelEmp(null)}>
+          <div style={{ ...S.modal, maxWidth: 420 }} onClick={e => e.stopPropagation()}>
+            <div style={S.modalHeader}>
+              <span style={S.modalTitle}>Supprimer le salarié ?</span>
+              <button style={S.closeBtn} onClick={() => setConfirmDelEmp(null)}>✕</button>
+            </div>
+            <p style={{ fontSize: 13, color: 'var(--text2)', marginBottom: 8 }}>
+              Vous êtes sur le point de supprimer <strong>{confirmDelEmp.prenom} {confirmDelEmp.nom}</strong>.
+            </p>
+            <p style={{ fontSize: 13, color: 'var(--red)', background: 'var(--red-light)', borderRadius: 6, padding: '8px 12px', marginBottom: 20 }}>
+              ⚠ Tous les repas associés à ce salarié seront également supprimés. Cette action est irréversible.
+            </p>
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+              <button style={S.btnGhost} onClick={() => setConfirmDelEmp(null)}>Annuler</button>
+              <button style={S.btnDanger} onClick={() => deleteEmployee(confirmDelEmp.id)}>Confirmer la suppression</button>
             </div>
           </div>
         </div>
@@ -345,6 +371,7 @@ export default function Home() {
 
             {tab === 'mensuel' && (
               <div style={{ display: 'grid', gap: 20 }}>
+                {/* ── En-tête navigation mois ── */}
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
                   <div>
                     <h1 style={S.pageTitle}>Vue mensuelle</h1>
@@ -357,51 +384,131 @@ export default function Home() {
                   </div>
                 </div>
 
-                <div style={{ maxWidth: 320 }}>
-                  <SearchInput value={monthSearch} onChange={setMonthSearch} placeholder="Filtrer les salariés…" />
-                </div>
-
                 {monthMeals.length === 0 ? (
                   <div style={S.card}><div style={S.emptyState}>Aucun repas pour {MONTHS[currentMonth]} {currentYear}.</div></div>
                 ) : (
                   <>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 12 }}>
-                      {filteredEmpForMonth.map(e => {
-                        const s = summary[e.id] || { paye: 0, invite: 0 }
-                        const total = s.paye + s.invite
-                        const countColor = monthMeals.find(m => m.employee_id === e.id)?.count_color || 'var(--primary)'
-                        if (total === 0) return null
-                        return (
-                          <div key={e.id} style={S.summaryCard}>
-                            <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 14, color: 'var(--text)' }}>{e.prenom} {e.nom}</div>
-                            <div style={{ display: 'flex', gap: 16 }}>
-                              <StatBox num={s.paye} label="Payé" color={countColor} />
-                              <StatBox num={s.invite} label="Invité" color={countColor} />
-                              <StatBox num={total} label="Total" color={countColor} big />
+                    {/* ── Récapitulatif tableau ── */}
+                    <div style={S.card}>
+                      <div style={{ ...S.cardHeader, marginBottom: 12 }}>
+                        <span style={S.cardTitle}>Récapitulatif par salarié</span>
+                        <div style={{ maxWidth: 260 }}>
+                          <SearchInput value={monthSearch} onChange={setMonthSearch} placeholder="Filtrer par nom…" />
+                        </div>
+                      </div>
+                      {/* en-têtes cliquables */}
+                      <div style={S.summaryHead}>
+                        {([
+                          { k: 'nom', label: 'Nom / Prénom' },
+                          { k: 'paye', label: 'Payé' },
+                          { k: 'invite', label: 'Invité' },
+                          { k: 'total', label: 'Total' },
+                        ] as const).map(({ k, label }) => {
+                          const active = summarySort.key === k
+                          return (
+                            <span key={k}
+                              onClick={() => setSummarySort(prev => ({ key: k, dir: prev.key === k && prev.dir === 'asc' ? 'desc' : 'asc' }))}
+                              style={{ cursor: 'pointer', userSelect: 'none', display: 'flex', alignItems: 'center', gap: 4,
+                                color: active ? 'var(--primary)' : 'var(--text3)',
+                                justifyContent: k === 'nom' ? 'flex-start' : 'center' }}>
+                              {label}
+                              <span style={{ fontSize: 10, opacity: active ? 1 : 0.4 }}>
+                                {active ? (summarySort.dir === 'asc' ? '▲' : '▼') : '⇅'}
+                              </span>
+                            </span>
+                          )
+                        })}
+                      </div>
+                      {[...filteredEmpForMonth]
+                        .filter(e => { const s = summary[e.id] || { paye: 0, invite: 0 }; return (s.paye + s.invite) > 0 })
+                        .sort((a, b) => {
+                          const sa = summary[a.id] || { paye: 0, invite: 0 }
+                          const sb = summary[b.id] || { paye: 0, invite: 0 }
+                          const d = summarySort.dir === 'asc' ? 1 : -1
+                          if (summarySort.key === 'nom') return (a.prenom + ' ' + a.nom).localeCompare(b.prenom + ' ' + b.nom) * d
+                          if (summarySort.key === 'paye') return (sa.paye - sb.paye) * d
+                          if (summarySort.key === 'invite') return (sa.invite - sb.invite) * d
+                          return ((sa.paye + sa.invite) - (sb.paye + sb.invite)) * d
+                        })
+                        .map((e, i, arr) => {
+                          const s = summary[e.id] || { paye: 0, invite: 0 }
+                          const total = s.paye + s.invite
+                          const countColor = monthMeals.find(m => m.employee_id === e.id)?.count_color || 'var(--primary)'
+                          return (
+                            <div key={e.id} style={{ ...S.summaryRow, background: i % 2 === 0 ? 'var(--bg)' : 'var(--bg2)', borderRadius: i === 0 ? '0' : undefined }}>
+                              <span style={{ fontWeight: 600, color: 'var(--text)', fontSize: 13 }}>{e.prenom} {e.nom}</span>
+                              <span style={{ textAlign: 'center', fontWeight: 700, fontSize: 15, color: countColor }}>{s.paye}</span>
+                              <span style={{ textAlign: 'center', fontWeight: 700, fontSize: 15, color: countColor }}>{s.invite}</span>
+                              <span style={{ textAlign: 'center', fontWeight: 800, fontSize: 17, color: countColor }}>{total}</span>
                             </div>
-                          </div>
-                        )
-                      })}
+                          )
+                        })}
                     </div>
 
+                    {/* ── Tableau de détail ── */}
                     <div style={S.card}>
-                      <div style={{ ...S.cardHeader, marginBottom: 0 }}>
-                        <span style={S.cardTitle}>Détail</span>
-                        <span style={S.badge}>{monthMeals.filter(m => {
-                          const e = empById[m.employee_id]
-                          if (!e) return false
-                          return (e.prenom + ' ' + e.nom).toLowerCase().includes(monthSearch.toLowerCase())
-                        }).length} repas</span>
+                      <div style={{ ...S.cardHeader, marginBottom: 12 }}>
+                        <span style={S.cardTitle}>Détail des repas</span>
+                        <span style={S.badge}>
+                          {monthMeals.filter(m => {
+                            const e = empById[m.employee_id]
+                            const nameOk = !e || (e.prenom + ' ' + e.nom).toLowerCase().includes(monthSearch.toLowerCase())
+                            const typeOk = detailTypeFilter === 'all' || m.type === detailTypeFilter
+                            const commentOk = !detailCommentSearch || (m.commentaire || '').toLowerCase().includes(detailCommentSearch.toLowerCase())
+                            return nameOk && typeOk && commentOk
+                          }).length} repas
+                        </span>
+                      </div>
+                      {/* filtres détail */}
+                      <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 14, alignItems: 'center' }}>
+                        <div style={{ flex: '1 1 180px', maxWidth: 260 }}>
+                          <SearchInput value={monthSearch} onChange={setMonthSearch} placeholder="Filtrer par salarié…" />
+                        </div>
+                        <div style={{ flex: '1 1 160px', maxWidth: 220 }}>
+                          <SearchInput value={detailCommentSearch} onChange={setDetailCommentSearch} placeholder="Filtrer par commentaire…" />
+                        </div>
+                        <select style={{ ...S.input, width: 'auto', padding: '7px 12px', fontSize: 13 }}
+                          value={detailTypeFilter} onChange={e => setDetailTypeFilter(e.target.value as typeof detailTypeFilter)}>
+                          <option value="all">Tous les types</option>
+                          <option value="paye">Payé uniquement</option>
+                          <option value="invite">Invité uniquement</option>
+                        </select>
+                        {(monthSearch || detailCommentSearch || detailTypeFilter !== 'all') && (
+                          <button style={S.btnGhost} onClick={() => { setMonthSearch(''); setDetailCommentSearch(''); setDetailTypeFilter('all') }}>
+                            ✕ Réinitialiser
+                          </button>
+                        )}
                       </div>
                       <div style={S.tableWrap} className="acm-tbl">
-                        <div style={S.tableHead}><span>Date</span><span>Salarié</span><span>Type</span><span>Commentaire</span><span></span></div>
+                        <div style={{ ...S.tableHead, cursor: 'default' }}>
+                          {(['date','emp','type','comment'] as const).map(k => {
+                            const labels: Record<string, string> = { date: 'Date', emp: 'Salarié', type: 'Type', comment: 'Commentaire' }
+                            const active = monthSort.key === k
+                            return (
+                              <span key={k} onClick={() => setMonthSort(prev => ({ key: k, dir: prev.key === k && prev.dir === 'asc' ? 'desc' : 'asc' }))}
+                                style={{ cursor: 'pointer', userSelect: 'none', color: active ? 'var(--primary)' : 'var(--text3)', display: 'flex', alignItems: 'center', gap: 4 }}>
+                                {labels[k]}
+                                <span style={{ fontSize: 10, opacity: active ? 1 : 0.4 }}>{active ? (monthSort.dir === 'asc' ? '▲' : '▼') : '⇅'}</span>
+                              </span>
+                            )
+                          })}
+                          <span></span>
+                        </div>
                         {[...monthMeals]
                           .filter(m => {
                             const e = empById[m.employee_id]
-                            if (!e) return true
-                            return (e.prenom + ' ' + e.nom).toLowerCase().includes(monthSearch.toLowerCase())
+                            const nameOk = !e || (e.prenom + ' ' + e.nom).toLowerCase().includes(monthSearch.toLowerCase())
+                            const typeOk = detailTypeFilter === 'all' || m.type === detailTypeFilter
+                            const commentOk = !detailCommentSearch || (m.commentaire || '').toLowerCase().includes(detailCommentSearch.toLowerCase())
+                            return nameOk && typeOk && commentOk
                           })
-                          .sort((a, b) => a.date.localeCompare(b.date))
+                          .sort((a, b) => {
+                            const d = monthSort.dir === 'asc' ? 1 : -1
+                            if (monthSort.key === 'date') return a.date.localeCompare(b.date) * d
+                            if (monthSort.key === 'emp') return getEmpName(a.employee_id).localeCompare(getEmpName(b.employee_id)) * d
+                            if (monthSort.key === 'type') return a.type.localeCompare(b.type) * d
+                            return (a.commentaire || '').localeCompare(b.commentaire || '') * d
+                          })
                           .map(m => (
                             <MealRow key={m.id} meal={m} empName={getEmpName(m.employee_id)} onEdit={() => setEditMeal(m)} onDelete={() => deleteMeal(m.id)} />
                           ))}
@@ -441,7 +548,7 @@ export default function Home() {
                       </div>
                       <div style={{ display: 'flex', gap: 6 }}>
                         <button style={S.btnOutline} onClick={() => { setEditEmp(e); setEForm({ nom: e.nom, prenom: e.prenom }) }}>Modifier</button>
-                        <button style={S.btnDanger} onClick={() => deleteEmployee(e.id)}>Supprimer</button>
+                        <button style={S.btnDanger} onClick={() => setConfirmDelEmp(e)}>Supprimer</button>
                       </div>
                     </div>
                   ))}
@@ -516,6 +623,8 @@ const S = {
   tableHead: { display: 'grid', gridTemplateColumns: 'clamp(90px,10%,130px) 1fr clamp(70px,8%,100px) 1fr clamp(60px,7%,80px)', gap: 12, padding: '6px 0 10px', borderBottom: '1px solid var(--border)', fontSize: 11, fontWeight: 600, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '.05em' } as React.CSSProperties,
   tableRow: { display: 'grid', gridTemplateColumns: 'clamp(90px,10%,130px) 1fr clamp(70px,8%,100px) 1fr clamp(60px,7%,80px)', gap: 12, alignItems: 'center', padding: '11px 0', borderBottom: '1px solid var(--border)' } as React.CSSProperties,
   summaryCard: { background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '18px 20px', boxShadow: 'var(--shadow)', borderLeft: '3px solid var(--secondary)' } as React.CSSProperties,
+  summaryHead: { display: 'grid', gridTemplateColumns: '1fr 80px 80px 80px', gap: 12, padding: '8px 14px 10px', borderBottom: '2px solid var(--border)', fontSize: 11, fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '.06em' } as React.CSSProperties,
+  summaryRow: { display: 'grid', gridTemplateColumns: '1fr 80px 80px 80px', gap: 12, alignItems: 'center', padding: '10px 14px', borderBottom: '1px solid var(--border)' } as React.CSSProperties,
   emptyState: { textAlign: 'center', padding: '32px 0', color: 'var(--text3)', fontSize: 13 } as React.CSSProperties,
   overlay: { position: 'fixed', inset: 0, background: 'rgba(15,23,42,.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, backdropFilter: 'blur(2px)' } as React.CSSProperties,
   modal: { background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 14, padding: 28, width: 480, maxWidth: '95vw', boxShadow: '0 20px 60px rgba(0,0,0,.15)' } as React.CSSProperties,
