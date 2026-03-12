@@ -1,9 +1,10 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useMemo } from 'react'
 import { supabase, type Employee, type Meal } from '@/lib/supabase'
 
 const MONTHS = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre']
+const LOGO_SRC = "data:image/jpeg;base64,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"
 
 function formatDate(d: string) {
   const [y, m, day] = d.split('-')
@@ -18,33 +19,53 @@ function genCommentaire(type: 'paye' | 'invite', date: string, inviterName?: str
 }
 
 const PRESET_COLORS = [
-  '#f0f0f0','#999999','#e8b84b','#4ade80','#60a5fa',
-  '#f87171','#c084fc','#fb923c','#34d399','#f472b6',
-  '#111111','#1e3a5f','#3b1f1f','#1f3b2a',
+  '#0f172a','#00336B','#9AC00C','#059669','#3b82f6',
+  '#8b5cf6','#f59e0b','#ef4444','#ec4899','#64748b',
+  '#ffffff','#f1f5f9','#fef3c7','#dcfce7',
 ]
 
 function ColorPicker({ value, onChange, label }: { value: string; onChange: (c: string) => void; label: string }) {
   const [open, setOpen] = useState(false)
   return (
     <div style={{ position: 'relative' }}>
-      <label style={styles.label}>{label}</label>
-      <button onClick={() => setOpen(o => !o)} style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--bg3)', border: '1px solid var(--border2)', borderRadius: 'var(--radius-sm)', padding: '7px 12px', cursor: 'pointer', color: 'var(--text)', width: '100%' }}>
-        <span style={{ width: 16, height: 16, borderRadius: 4, background: value, border: '1px solid #444', flexShrink: 0 }} />
-        <span style={{ fontSize: 12, color: 'var(--text2)' }}>{value}</span>
+      <label style={S.label}>{label}</label>
+      <button type="button" onClick={() => setOpen(o => !o)} style={S.colorTrigger}>
+        <span style={{ width: 18, height: 18, borderRadius: 4, background: value, border: '1px solid var(--border2)', flexShrink: 0, display: 'inline-block' }} />
+        <span style={{ fontSize: 12, color: 'var(--text2)', fontFamily: 'monospace' }}>{value}</span>
+        <span style={{ marginLeft: 'auto', color: 'var(--text3)', fontSize: 10 }}>▼</span>
       </button>
       {open && (
-        <div style={{ position: 'absolute', top: '100%', left: 0, zIndex: 200, marginTop: 4, background: 'var(--bg2)', border: '1px solid var(--border2)', borderRadius: 'var(--radius)', padding: 12, boxShadow: '0 8px 32px rgba(0,0,0,.6)', width: 220 }}>
+        <div style={S.colorPanel} onClick={e => e.stopPropagation()}>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>
             {PRESET_COLORS.map(c => (
-              <button key={c} onClick={() => { onChange(c); setOpen(false) }} style={{ width: 24, height: 24, borderRadius: 4, background: c, border: c === value ? '2px solid var(--accent)' : '1px solid #444', cursor: 'pointer', flexShrink: 0 }} />
+              <button key={c} type="button" onClick={() => { onChange(c); setOpen(false) }} style={{
+                width: 26, height: 26, borderRadius: 5, background: c, cursor: 'pointer', flexShrink: 0,
+                border: c === value ? '2px solid var(--primary)' : '1px solid var(--border2)',
+                boxShadow: c === value ? '0 0 0 2px var(--primary-light)' : 'none'
+              }} />
             ))}
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <input type="color" value={value} onChange={e => onChange(e.target.value)} style={{ width: 32, height: 32, border: 'none', background: 'none', cursor: 'pointer', padding: 0 }} />
-            <input value={value} onChange={e => onChange(e.target.value)} style={{ ...styles.input, flex: 1, fontSize: 12 }} placeholder="#000000" />
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            <input type="color" value={value} onChange={e => onChange(e.target.value)}
+              style={{ width: 34, height: 34, border: 'none', background: 'none', cursor: 'pointer', padding: 0, borderRadius: 6 }} />
+            <input value={value} onChange={e => onChange(e.target.value)} style={{ ...S.input, flex: 1, fontSize: 12, fontFamily: 'monospace' }} placeholder="#000000" />
           </div>
         </div>
       )}
+    </div>
+  )
+}
+
+function SearchInput({ value, onChange, placeholder }: { value: string; onChange: (v: string) => void; placeholder?: string }) {
+  return (
+    <div style={{ position: 'relative' }}>
+      <span style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--text3)', fontSize: 14, pointerEvents: 'none' }}>⌕</span>
+      <input
+        style={{ ...S.input, paddingLeft: 30 }}
+        placeholder={placeholder || 'Rechercher un salarié…'}
+        value={value}
+        onChange={e => onChange(e.target.value)}
+      />
     </div>
   )
 }
@@ -58,13 +79,24 @@ export default function Home() {
   const [loading, setLoading] = useState(true)
   const [currentMonth, setCurrentMonth] = useState(new Date().getMonth())
   const [currentYear] = useState(new Date().getFullYear())
-  const [mForm, setMForm] = useState({ employeeId: '', date: new Date().toISOString().slice(0, 10), type: 'paye' as 'paye' | 'invite', invites: [] as string[], commentaire: '', commentaireColor: '#f0f0f0', countColor: '#e8b84b' })
+
+  const [mForm, setMForm] = useState({
+    employeeId: '', date: new Date().toISOString().slice(0, 10),
+    type: 'paye' as 'paye' | 'invite', invites: [] as string[],
+    commentaire: '', commentaireColor: '#0f172a', countColor: '#00336B',
+    empSearch: ''
+  })
   const [editMeal, setEditMeal] = useState<Meal | null>(null)
   const [eForm, setEForm] = useState({ nom: '', prenom: '' })
   const [editEmp, setEditEmp] = useState<Employee | null>(null)
-  const [toast, setToast] = useState('')
+  const [toast, setToast] = useState<{ msg: string; type: 'ok' | 'err' }>({ msg: '', type: 'ok' })
+  const [monthSearch, setMonthSearch] = useState('')
+  const [empSearch, setEmpSearch] = useState('')
 
-  function showToast(msg: string) { setToast(msg); setTimeout(() => setToast(''), 2800) }
+  function showToast(msg: string, type: 'ok' | 'err' = 'ok') {
+    setToast({ msg, type })
+    setTimeout(() => setToast({ msg: '', type: 'ok' }), 2800)
+  }
 
   const fetchAll = useCallback(async () => {
     setLoading(true)
@@ -79,8 +111,27 @@ export default function Home() {
 
   useEffect(() => { fetchAll() }, [fetchAll])
 
-  const empById = Object.fromEntries(employees.map(e => [e.id, e]))
-  function getEmpName(id: string | null) { if (!id) return '—'; const e = empById[id]; return e ? `${e.prenom} ${e.nom}` : '—' }
+  const empById = useMemo(() => Object.fromEntries(employees.map(e => [e.id, e])), [employees])
+  function getEmpName(id: string | null) {
+    if (!id) return '—'
+    const e = empById[id]
+    return e ? `${e.prenom} ${e.nom}` : '—'
+  }
+
+  const filteredEmpForForm = useMemo(() =>
+    employees.filter(e =>
+      (e.prenom + ' ' + e.nom).toLowerCase().includes(mForm.empSearch.toLowerCase())
+    ), [employees, mForm.empSearch])
+
+  const filteredEmpForMonth = useMemo(() =>
+    employees.filter(e =>
+      (e.prenom + ' ' + e.nom).toLowerCase().includes(monthSearch.toLowerCase())
+    ), [employees, monthSearch])
+
+  const filteredEmpForAdmin = useMemo(() =>
+    employees.filter(e =>
+      (e.prenom + ' ' + e.nom).toLowerCase().includes(empSearch.toLowerCase())
+    ), [employees, empSearch])
 
   async function addMeal() {
     if (!mForm.employeeId || !mForm.date) return
@@ -94,13 +145,18 @@ export default function Home() {
     } else {
       inserts.push({ employee_id: mForm.employeeId, date: mForm.date, type: 'invite', invited_by: null, commentaire: mForm.commentaire || genCommentaire('invite', mForm.date), commentaire_color: mForm.commentaireColor, count_color: mForm.countColor })
     }
-    await supabase.from('meals').insert(inserts)
-    setMForm(f => ({ ...f, employeeId: '', invites: [], commentaire: '' }))
+    const { error } = await supabase.from('meals').insert(inserts)
+    if (error) { showToast('Erreur lors de l\'enregistrement', 'err'); return }
+    setMForm(f => ({ ...f, employeeId: '', invites: [], commentaire: '', empSearch: '' }))
     showToast(`${inserts.length} repas enregistré${inserts.length > 1 ? 's' : ''} ✓`)
     fetchAll()
   }
 
-  async function deleteMeal(id: string) { await supabase.from('meals').delete().eq('id', id); setMeals(prev => prev.filter(m => m.id !== id)); showToast('Repas supprimé') }
+  async function deleteMeal(id: string) {
+    await supabase.from('meals').delete().eq('id', id)
+    setMeals(prev => prev.filter(m => m.id !== id))
+    showToast('Repas supprimé')
+  }
 
   async function saveEditMeal() {
     if (!editMeal) return
@@ -115,189 +171,357 @@ export default function Home() {
     setEForm({ nom: '', prenom: '' }); setEditEmp(null); fetchAll()
   }
 
-  async function deleteEmployee(id: string) { await supabase.from('employees').update({ actif: false }).eq('id', id); showToast('Salarié supprimé'); fetchAll() }
-  function toggleInvite(id: string) { setMForm(f => ({ ...f, invites: f.invites.includes(id) ? f.invites.filter(i => i !== id) : [...f.invites, id] })) }
+  async function deleteEmployee(id: string) {
+    await supabase.from('employees').update({ actif: false }).eq('id', id)
+    showToast('Salarié supprimé'); fetchAll()
+  }
 
-  const monthMeals = meals.filter(m => { const d = new Date(m.date); return d.getMonth() === currentMonth && d.getFullYear() === currentYear })
-  const summary = employees.reduce((acc, e) => { const em = monthMeals.filter(m => m.employee_id === e.id); acc[e.id] = { paye: em.filter(m => m.type === 'paye').length, invite: em.filter(m => m.type === 'invite').length }; return acc }, {} as Record<string, { paye: number; invite: number }>)
+  function toggleInvite(id: string) {
+    setMForm(f => ({ ...f, invites: f.invites.includes(id) ? f.invites.filter(i => i !== id) : [...f.invites, id] }))
+  }
+
+  const monthMeals = useMemo(() => meals.filter(m => {
+    const d = new Date(m.date)
+    return d.getMonth() === currentMonth && d.getFullYear() === currentYear
+  }), [meals, currentMonth, currentYear])
+
+  const summary = useMemo(() => employees.reduce((acc, e) => {
+    const em = monthMeals.filter(m => m.employee_id === e.id)
+    acc[e.id] = { paye: em.filter(m => m.type === 'paye').length, invite: em.filter(m => m.type === 'invite').length }
+    return acc
+  }, {} as Record<string, { paye: number; invite: number }>), [employees, monthMeals])
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
-      {toast && (<div style={{ position: 'fixed', bottom: 24, right: 24, zIndex: 999, background: 'var(--accent)', color: '#000', padding: '10px 20px', borderRadius: 'var(--radius)', fontWeight: 600, fontSize: 13, boxShadow: '0 4px 20px rgba(232,184,75,.4)' }}>{toast}</div>)}
+      {toast.msg && (
+        <div style={{ position: 'fixed', bottom: 24, right: 24, zIndex: 999, background: toast.type === 'ok' ? 'var(--primary)' : 'var(--red)', color: '#fff', padding: '11px 20px', borderRadius: 8, fontWeight: 600, fontSize: 13, boxShadow: '0 4px 20px rgba(0,0,0,.15)', display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span>{toast.type === 'ok' ? '✓' : '✕'}</span> {toast.msg}
+        </div>
+      )}
 
       {editMeal && (
-        <div style={styles.overlay} onClick={() => setEditMeal(null)}>
-          <div style={styles.modal} onClick={e => e.stopPropagation()}>
-            <div style={styles.modalTitle}>Modifier le repas</div>
-            <div style={{ display: 'grid', gap: 16 }}>
-              <div><label style={styles.label}>Salarié</label><div style={{ fontWeight: 500 }}>{getEmpName(editMeal.employee_id)}</div></div>
-              <div><label style={styles.label}>Date</label><input type="date" style={styles.input} value={editMeal.date} onChange={e => setEditMeal(m => m ? { ...m, date: e.target.value } : m)} /></div>
-              <div><label style={styles.label}>Type</label><span style={editMeal.type === 'paye' ? styles.badgePaye : styles.badgeInvite}>{editMeal.type === 'paye' ? 'Payé' : 'Invité'}</span></div>
-              {editMeal.invited_by && <div><label style={styles.label}>Invité par</label><div style={{ color: 'var(--text2)' }}>{getEmpName(editMeal.invited_by)}</div></div>}
-              <div><label style={styles.label}>Commentaire</label><input style={styles.input} value={editMeal.commentaire || ''} onChange={e => setEditMeal(m => m ? { ...m, commentaire: e.target.value } : m)} /></div>
-              <ColorPicker label="Couleur du commentaire" value={editMeal.commentaire_color || '#f0f0f0'} onChange={c => setEditMeal(m => m ? { ...m, commentaire_color: c } : m)} />
-              <ColorPicker label="Couleur du compteur" value={editMeal.count_color || '#e8b84b'} onChange={c => setEditMeal(m => m ? { ...m, count_color: c } : m)} />
-              <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
-                <button style={styles.btnGhost} onClick={() => setEditMeal(null)}>Annuler</button>
-                <button style={styles.btnPrimary} onClick={saveEditMeal}>Enregistrer</button>
+        <div style={S.overlay} onClick={() => setEditMeal(null)}>
+          <div style={S.modal} onClick={e => e.stopPropagation()}>
+            <div style={S.modalHeader}>
+              <span style={S.modalTitle}>Modifier le repas</span>
+              <button style={S.closeBtn} onClick={() => setEditMeal(null)}>✕</button>
+            </div>
+            <div style={{ display: 'grid', gap: 14 }}>
+              <div><label style={S.label}>Salarié</label><div style={{ fontWeight: 500, color: 'var(--primary)' }}>{getEmpName(editMeal.employee_id)}</div></div>
+              <div><label style={S.label}>Date</label><input type="date" style={S.input} value={editMeal.date} onChange={e => setEditMeal(m => m ? { ...m, date: e.target.value } : m)} /></div>
+              <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                <label style={S.label}>Type</label>
+                <span style={editMeal.type === 'paye' ? S.badgePaye : S.badgeInvite}>{editMeal.type === 'paye' ? 'Payé' : 'Invité'}</span>
+              </div>
+              {editMeal.invited_by && <div><label style={S.label}>Invité par</label><div style={{ color: 'var(--text2)' }}>{getEmpName(editMeal.invited_by)}</div></div>}
+              <div><label style={S.label}>Commentaire</label><input style={S.input} value={editMeal.commentaire || ''} onChange={e => setEditMeal(m => m ? { ...m, commentaire: e.target.value } : m)} /></div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                <ColorPicker label="Couleur commentaire" value={editMeal.commentaire_color || '#0f172a'} onChange={c => setEditMeal(m => m ? { ...m, commentaire_color: c } : m)} />
+                <ColorPicker label="Couleur compteur" value={editMeal.count_color || '#00336B'} onChange={c => setEditMeal(m => m ? { ...m, count_color: c } : m)} />
+              </div>
+              <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', paddingTop: 4 }}>
+                <button style={S.btnGhost} onClick={() => setEditMeal(null)}>Annuler</button>
+                <button style={S.btnPrimary} onClick={saveEditMeal}>Enregistrer</button>
               </div>
             </div>
           </div>
         </div>
       )}
 
-      <header style={{ background: 'var(--bg2)', borderBottom: '1px solid var(--border)', padding: '0 32px', position: 'sticky', top: 0, zIndex: 50 }}>
-        <div style={{ maxWidth: 960, margin: '0 auto' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '16px 0 0' }}>
-            <div style={{ width: 36, height: 36, background: 'var(--accent)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>🍽</div>
+      <header style={S.header}>
+        <div style={S.headerInner}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+            <div style={S.logoWrap}>
+              <img src={LOGO_SRC} alt="Actemium" style={S.logo} />
+            </div>
+            <div style={S.divider} />
             <div>
-              <div style={{ fontFamily: 'Syne, sans-serif', fontSize: 17, fontWeight: 700 }}>Notes de frais <span style={{ color: 'var(--accent)' }}>Actemium</span></div>
-              <div style={{ fontSize: 11, color: 'var(--text3)' }}>{employees.length} salariés actifs</div>
+              <div style={S.appTitle}>Gestion des repas</div>
+              <div style={S.appSub}>{employees.length} salarié{employees.length !== 1 ? 's' : ''} actifs</div>
             </div>
           </div>
-          <nav style={{ display: 'flex', marginTop: 12 }}>
+          <nav style={{ display: 'flex', gap: 4 }}>
             {(['saisie', 'mensuel', 'salaries'] as Tab[]).map(t => (
-              <button key={t} onClick={() => setTab(t)} style={{ ...styles.tabBtn, color: tab === t ? 'var(--accent)' : 'var(--text3)', borderBottom: tab === t ? '2px solid var(--accent)' : '2px solid transparent' }}>
-                {t === 'saisie' ? 'Saisie repas' : t === 'mensuel' ? 'Vue mensuelle' : 'Salariés'}
+              <button key={t} onClick={() => setTab(t)} style={{ ...S.tabBtn, background: tab === t ? 'var(--primary-light)' : 'transparent', color: tab === t ? 'var(--primary)' : 'var(--text2)', fontWeight: tab === t ? 600 : 400 }}>
+                {t === 'saisie' ? '✎ Saisie' : t === 'mensuel' ? '◫ Mensuel' : '☰ Salariés'}
               </button>
             ))}
           </nav>
         </div>
       </header>
 
-      <main style={{ maxWidth: 960, margin: '0 auto', padding: '28px 32px' }}>
-        {loading ? <div style={{ color: 'var(--text2)', padding: '60px 0', textAlign: 'center' }}>Chargement…</div> : (
+      <main style={S.main}>
+        {loading ? (
+          <div style={{ textAlign: 'center', padding: '80px 0', color: 'var(--text3)' }}>
+            <div style={{ fontSize: 28, marginBottom: 12 }}>⟳</div>
+            <div>Chargement…</div>
+          </div>
+        ) : (
           <>
             {tab === 'saisie' && (
               <div style={{ display: 'grid', gap: 20 }}>
-                <div style={styles.card}>
-                  <div style={styles.cardTitle}>Ajouter un repas</div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16, marginBottom: 20 }}>
-                    <div><label style={styles.label}>Salarié</label><select style={styles.input} value={mForm.employeeId} onChange={e => setMForm(f => ({ ...f, employeeId: e.target.value, invites: [] }))}><option value="">Sélectionner…</option>{employees.map(e => <option key={e.id} value={e.id}>{e.prenom} {e.nom}</option>)}</select></div>
-                    <div><label style={styles.label}>Date</label><input type="date" style={styles.input} value={mForm.date} onChange={e => setMForm(f => ({ ...f, date: e.target.value }))} /></div>
-                    <div><label style={styles.label}>Type</label><select style={styles.input} value={mForm.type} onChange={e => setMForm(f => ({ ...f, type: e.target.value as 'paye' | 'invite', invites: [] }))}><option value="paye">Payé par le salarié</option><option value="invite">En tant qu'invité</option></select></div>
+                <div style={S.card}>
+                  <div style={S.cardHeader}>
+                    <span style={S.cardTitle}>Ajouter un repas</span>
                   </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 20 }}>
-                    <div><label style={styles.label}>Commentaire <span style={{ color: 'var(--text3)', fontWeight: 400, textTransform: 'none' }}>(auto si vide)</span></label><input style={styles.input} value={mForm.commentaire} placeholder={genCommentaire(mForm.type, mForm.date)} onChange={e => setMForm(f => ({ ...f, commentaire: e.target.value }))} /></div>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 14, marginBottom: 16 }}>
+                    <div>
+                      <label style={S.label}>Salarié</label>
+                      <SearchInput value={mForm.empSearch} onChange={v => setMForm(f => ({ ...f, empSearch: v, employeeId: '' }))} placeholder="Filtrer les salariés…" />
+                      <select style={{ ...S.input, marginTop: 6 }} value={mForm.employeeId} onChange={e => setMForm(f => ({ ...f, employeeId: e.target.value, invites: [] }))}>
+                        <option value="">Sélectionner…</option>
+                        {filteredEmpForForm.map(e => <option key={e.id} value={e.id}>{e.prenom} {e.nom}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label style={S.label}>Date</label>
+                      <input type="date" style={S.input} value={mForm.date} onChange={e => setMForm(f => ({ ...f, date: e.target.value }))} />
+                    </div>
+                    <div>
+                      <label style={S.label}>Type de repas</label>
+                      <select style={S.input} value={mForm.type} onChange={e => setMForm(f => ({ ...f, type: e.target.value as 'paye' | 'invite', invites: [] }))}>
+                        <option value="paye">Payé par le salarié</option>
+                        <option value="invite">En tant qu'invité</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 16 }}>
+                    <div>
+                      <label style={S.label}>Commentaire <span style={{ color: 'var(--text3)', fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>(laissez vide pour auto)</span></label>
+                      <input style={S.input} value={mForm.commentaire} placeholder={genCommentaire(mForm.type, mForm.date)} onChange={e => setMForm(f => ({ ...f, commentaire: e.target.value }))} />
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                       <ColorPicker label="Couleur commentaire" value={mForm.commentaireColor} onChange={c => setMForm(f => ({ ...f, commentaireColor: c }))} />
                       <ColorPicker label="Couleur compteur" value={mForm.countColor} onChange={c => setMForm(f => ({ ...f, countColor: c }))} />
                     </div>
                   </div>
+
                   {mForm.type === 'paye' && mForm.employeeId && (
-                    <div style={{ marginBottom: 20 }}>
-                      <label style={styles.label}>Invités <span style={{ color: 'var(--text3)', fontWeight: 400, textTransform: 'none' }}>— cliquer pour sélectionner</span></label>
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 6 }}>
+                    <div style={{ marginBottom: 16 }}>
+                      <label style={S.label}>Personnes invitées <span style={{ color: 'var(--text3)', fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>— cliquer pour sélectionner</span></label>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 8 }}>
                         {employees.filter(e => e.id !== mForm.employeeId).map(e => (
-                          <button key={e.id} onClick={() => toggleInvite(e.id)} style={{ padding: '6px 14px', borderRadius: 20, fontSize: 13, fontWeight: 500, cursor: 'pointer', border: mForm.invites.includes(e.id) ? '1px solid var(--accent)' : '1px solid var(--border2)', background: mForm.invites.includes(e.id) ? 'var(--accent)' : 'var(--bg3)', color: mForm.invites.includes(e.id) ? '#000' : 'var(--text2)', transition: 'all .15s' }}>
+                          <button key={e.id} type="button" onClick={() => toggleInvite(e.id)} style={{ padding: '6px 14px', borderRadius: 20, fontSize: 13, fontWeight: 500, cursor: 'pointer', transition: 'all .15s', border: mForm.invites.includes(e.id) ? '1.5px solid var(--secondary)' : '1.5px solid var(--border2)', background: mForm.invites.includes(e.id) ? 'var(--secondary-light)' : 'var(--bg2)', color: mForm.invites.includes(e.id) ? '#3a4a00' : 'var(--text2)' }}>
                             {mForm.invites.includes(e.id) ? '✓ ' : ''}{e.prenom} {e.nom}
                           </button>
                         ))}
                       </div>
-                      {mForm.invites.length > 0 && <div style={{ marginTop: 10, fontSize: 12, color: 'var(--accent)', background: 'rgba(232,184,75,.08)', borderRadius: 6, padding: '8px 12px' }}>→ {mForm.invites.length} entrée{mForm.invites.length > 1 ? 's' : ''} «invité» seront créées automatiquement.</div>}
+                      {mForm.invites.length > 0 && (
+                        <div style={{ marginTop: 10, fontSize: 12, color: 'var(--primary)', background: 'var(--primary-light)', borderRadius: 6, padding: '8px 12px', fontWeight: 500 }}>
+                          → {mForm.invites.length} entrée{mForm.invites.length > 1 ? 's' : ''} «invité» créées automatiquement
+                        </div>
+                      )}
                     </div>
                   )}
-                  <button style={styles.btnPrimary} onClick={addMeal} disabled={!mForm.employeeId || !mForm.date}>+ Enregistrer le repas</button>
+
+                  <button style={S.btnPrimary} onClick={addMeal} disabled={!mForm.employeeId || !mForm.date}>
+                    + Enregistrer le repas
+                  </button>
                 </div>
-                <div style={styles.card}>
-                  <div style={{ ...styles.cardTitle, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}><span>Repas récents</span><span style={{ fontSize: 12, color: 'var(--text3)', fontWeight: 400 }}>{meals.length} au total</span></div>
-                  {meals.slice(0, 10).length === 0 && <div style={{ color: 'var(--text3)', textAlign: 'center', padding: '24px 0' }}>Aucun repas enregistré.</div>}
-                  {meals.slice(0, 10).map(m => <MealRow key={m.id} meal={m} empName={getEmpName(m.employee_id)} onEdit={() => setEditMeal(m)} onDelete={() => deleteMeal(m.id)} />)}
+
+                <div style={S.card}>
+                  <div style={{ ...S.cardHeader, marginBottom: 0 }}>
+                    <span style={S.cardTitle}>Repas récents</span>
+                    <span style={S.badge}>{meals.length} au total</span>
+                  </div>
+                  <div style={S.tableWrap}>
+                    {meals.slice(0, 10).length === 0 ? (
+                      <div style={S.emptyState}>Aucun repas enregistré.</div>
+                    ) : (
+                      <>
+                        <div style={S.tableHead}>
+                          <span>Date</span><span>Salarié</span><span>Type</span><span>Commentaire</span><span></span>
+                        </div>
+                        {meals.slice(0, 10).map(m => (
+                          <MealRow key={m.id} meal={m} empName={getEmpName(m.employee_id)} onEdit={() => setEditMeal(m)} onDelete={() => deleteMeal(m.id)} />
+                        ))}
+                      </>
+                    )}
+                  </div>
                 </div>
               </div>
             )}
 
             {tab === 'mensuel' && (
               <div style={{ display: 'grid', gap: 20 }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <div><div style={styles.pageTitle}>Vue mensuelle</div><div style={{ fontSize: 13, color: 'var(--text3)' }}>Résumé et détail par salarié</div></div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <button style={styles.navBtn} onClick={() => setCurrentMonth(m => Math.max(0, m - 1))}>‹</button>
-                    <span style={{ fontFamily: 'Syne, sans-serif', fontWeight: 600, minWidth: 130, textAlign: 'center' }}>{MONTHS[currentMonth]} {currentYear}</span>
-                    <button style={styles.navBtn} onClick={() => setCurrentMonth(m => Math.min(11, m + 1))}>›</button>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+                  <div>
+                    <h1 style={S.pageTitle}>Vue mensuelle</h1>
+                    <p style={{ fontSize: 13, color: 'var(--text2)' }}>Résumé et détail des repas par salarié</p>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <button style={S.navBtn} onClick={() => setCurrentMonth(m => Math.max(0, m - 1))}>‹</button>
+                    <span style={{ fontWeight: 600, minWidth: 140, textAlign: 'center', color: 'var(--primary)', fontSize: 15 }}>{MONTHS[currentMonth]} {currentYear}</span>
+                    <button style={S.navBtn} onClick={() => setCurrentMonth(m => Math.min(11, m + 1))}>›</button>
                   </div>
                 </div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(190px, 1fr))', gap: 12 }}>
-                  {employees.map(e => {
-                    const s = summary[e.id] || { paye: 0, invite: 0 }; const total = s.paye + s.invite
-                    const countColor = monthMeals.find(m => m.employee_id === e.id)?.count_color || 'var(--accent)'
-                    if (total === 0) return null
-                    return (<div key={e.id} style={{ ...styles.card, padding: 18 }}><div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 600, marginBottom: 14, fontSize: 14 }}>{e.prenom} {e.nom}</div><div style={{ display: 'flex', gap: 20 }}><Stat num={s.paye} label="Payé" color={countColor} /><Stat num={s.invite} label="Invité" color={countColor} /><Stat num={total} label="Total" color={countColor} big /></div></div>)
-                  })}
-                  {monthMeals.length === 0 && <div style={{ gridColumn: '1/-1', color: 'var(--text3)', textAlign: 'center', padding: '40px 0' }}>Aucun repas pour {MONTHS[currentMonth]} {currentYear}.</div>}
+
+                <div style={{ maxWidth: 320 }}>
+                  <SearchInput value={monthSearch} onChange={setMonthSearch} placeholder="Filtrer les salariés…" />
                 </div>
-                {monthMeals.length > 0 && (
-                  <div style={styles.card}>
-                    <div style={{ ...styles.cardTitle, marginBottom: 16 }}>Détail — {monthMeals.length} repas</div>
-                    {[...monthMeals].sort((a, b) => a.date.localeCompare(b.date)).map(m => <MealRow key={m.id} meal={m} empName={getEmpName(m.employee_id)} onEdit={() => setEditMeal(m)} onDelete={() => deleteMeal(m.id)} />)}
-                  </div>
+
+                {monthMeals.length === 0 ? (
+                  <div style={S.card}><div style={S.emptyState}>Aucun repas pour {MONTHS[currentMonth]} {currentYear}.</div></div>
+                ) : (
+                  <>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 12 }}>
+                      {filteredEmpForMonth.map(e => {
+                        const s = summary[e.id] || { paye: 0, invite: 0 }
+                        const total = s.paye + s.invite
+                        const countColor = monthMeals.find(m => m.employee_id === e.id)?.count_color || 'var(--primary)'
+                        if (total === 0) return null
+                        return (
+                          <div key={e.id} style={S.summaryCard}>
+                            <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 14, color: 'var(--text)' }}>{e.prenom} {e.nom}</div>
+                            <div style={{ display: 'flex', gap: 16 }}>
+                              <StatBox num={s.paye} label="Payé" color={countColor} />
+                              <StatBox num={s.invite} label="Invité" color={countColor} />
+                              <StatBox num={total} label="Total" color={countColor} big />
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+
+                    <div style={S.card}>
+                      <div style={{ ...S.cardHeader, marginBottom: 0 }}>
+                        <span style={S.cardTitle}>Détail</span>
+                        <span style={S.badge}>{monthMeals.filter(m => {
+                          const e = empById[m.employee_id]
+                          if (!e) return false
+                          return (e.prenom + ' ' + e.nom).toLowerCase().includes(monthSearch.toLowerCase())
+                        }).length} repas</span>
+                      </div>
+                      <div style={S.tableWrap}>
+                        <div style={S.tableHead}><span>Date</span><span>Salarié</span><span>Type</span><span>Commentaire</span><span></span></div>
+                        {[...monthMeals]
+                          .filter(m => {
+                            const e = empById[m.employee_id]
+                            if (!e) return true
+                            return (e.prenom + ' ' + e.nom).toLowerCase().includes(monthSearch.toLowerCase())
+                          })
+                          .sort((a, b) => a.date.localeCompare(b.date))
+                          .map(m => (
+                            <MealRow key={m.id} meal={m} empName={getEmpName(m.employee_id)} onEdit={() => setEditMeal(m)} onDelete={() => deleteMeal(m.id)} />
+                          ))}
+                      </div>
+                    </div>
+                  </>
                 )}
               </div>
             )}
 
             {tab === 'salaries' && (
               <div style={{ display: 'grid', gap: 20 }}>
-                <div style={styles.pageTitle}>Salariés</div>
-                <div style={styles.card}>
-                  <div style={styles.cardTitle}>{editEmp ? 'Modifier' : 'Nouveau salarié'}</div>
+                <h1 style={S.pageTitle}>Gestion des salariés</h1>
+                <div style={S.card}>
+                  <div style={S.cardTitle}>{editEmp ? 'Modifier le salarié' : 'Nouveau salarié'}</div>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto', gap: 12, alignItems: 'flex-end', marginTop: 14 }}>
-                    <div><label style={styles.label}>Prénom</label><input style={styles.input} placeholder="Prénom" value={eForm.prenom} onChange={e => setEForm(f => ({ ...f, prenom: e.target.value }))} /></div>
-                    <div><label style={styles.label}>Nom</label><input style={styles.input} placeholder="Nom" value={eForm.nom} onChange={e => setEForm(f => ({ ...f, nom: e.target.value }))} /></div>
-                    <div style={{ display: 'flex', gap: 8 }}><button style={styles.btnPrimary} onClick={saveEmployee} disabled={!eForm.nom || !eForm.prenom}>{editEmp ? 'Enregistrer' : '+ Ajouter'}</button>{editEmp && <button style={styles.btnGhost} onClick={() => { setEditEmp(null); setEForm({ nom: '', prenom: '' }) }}>Annuler</button>}</div>
+                    <div><label style={S.label}>Prénom</label><input style={S.input} placeholder="Prénom" value={eForm.prenom} onChange={e => setEForm(f => ({ ...f, prenom: e.target.value }))} /></div>
+                    <div><label style={S.label}>Nom</label><input style={S.input} placeholder="Nom" value={eForm.nom} onChange={e => setEForm(f => ({ ...f, nom: e.target.value }))} /></div>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <button style={S.btnPrimary} onClick={saveEmployee} disabled={!eForm.nom || !eForm.prenom}>{editEmp ? 'Enregistrer' : '+ Ajouter'}</button>
+                      {editEmp && <button style={S.btnGhost} onClick={() => { setEditEmp(null); setEForm({ nom: '', prenom: '' }) }}>Annuler</button>}
+                    </div>
                   </div>
                 </div>
-                <div style={styles.card}>
-                  <div style={{ ...styles.cardTitle, marginBottom: 16 }}>{employees.length} salarié{employees.length !== 1 ? 's' : ''}</div>
-                  {employees.map(e => (
-                    <div key={e.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderBottom: '1px solid var(--border)' }}>
-                      <div><div style={{ fontWeight: 500 }}>{e.prenom} {e.nom}</div><div style={{ fontSize: 12, color: 'var(--text3)' }}>{meals.filter(m => m.employee_id === e.id).length} repas enregistrés</div></div>
-                      <div style={{ display: 'flex', gap: 8 }}><button style={styles.btnIcon} onClick={() => { setEditEmp(e); setEForm({ nom: e.nom, prenom: e.prenom }) }}>✎</button><button style={{ ...styles.btnIcon, color: 'var(--red)' }} onClick={() => deleteEmployee(e.id)}>✕</button></div>
+                <div style={S.card}>
+                  <div style={{ ...S.cardHeader, marginBottom: 16 }}>
+                    <span style={S.cardTitle}>{employees.length} salarié{employees.length !== 1 ? 's' : ''}</span>
+                    <div style={{ maxWidth: 260, flex: 1 }}>
+                      <SearchInput value={empSearch} onChange={setEmpSearch} />
+                    </div>
+                  </div>
+                  {filteredEmpForAdmin.map((e, i) => (
+                    <div key={e.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '13px 0', borderTop: i > 0 ? '1px solid var(--border)' : 'none' }}>
+                      <div>
+                        <div style={{ fontWeight: 500, color: 'var(--text)' }}>{e.prenom} {e.nom}</div>
+                        <div style={{ fontSize: 12, color: 'var(--text3)', marginTop: 2 }}>{meals.filter(m => m.employee_id === e.id).length} repas enregistrés</div>
+                      </div>
+                      <div style={{ display: 'flex', gap: 6 }}>
+                        <button style={S.btnOutline} onClick={() => { setEditEmp(e); setEForm({ nom: e.nom, prenom: e.prenom }) }}>Modifier</button>
+                        <button style={S.btnDanger} onClick={() => deleteEmployee(e.id)}>Supprimer</button>
+                      </div>
                     </div>
                   ))}
+                  {filteredEmpForAdmin.length === 0 && <div style={S.emptyState}>Aucun résultat pour "{empSearch}"</div>}
                 </div>
               </div>
             )}
           </>
         )}
       </main>
-      <style>{`@keyframes fadeIn { from { opacity:0; transform:translateY(8px) } to { opacity:1; transform:none } } input[type=date]::-webkit-calendar-picker-indicator { filter: invert(0.7); }`}</style>
+
+      <style>{`
+        @keyframes fadeUp { from { opacity:0; transform:translateY(6px) } to { opacity:1; transform:none } }
+        input[type=date]::-webkit-calendar-picker-indicator { opacity: 0.5; cursor: pointer; }
+        button:disabled { opacity: 0.4; cursor: not-allowed; }
+        select { appearance: auto; }
+      `}</style>
     </div>
   )
 }
 
 function MealRow({ meal, empName, onEdit, onDelete }: { meal: Meal; empName: string; onEdit: () => void; onDelete: () => void }) {
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '110px 160px 80px 1fr 80px', gap: 12, alignItems: 'center', padding: '11px 0', borderBottom: '1px solid var(--border)' }}>
+    <div style={S.tableRow}>
       <span style={{ fontSize: 12, color: 'var(--text3)', fontFamily: 'monospace' }}>{formatDate(meal.date)}</span>
       <span style={{ fontWeight: 500, fontSize: 13 }}>{empName}</span>
-      <span style={meal.type === 'paye' ? styles.badgePaye : styles.badgeInvite}>{meal.type === 'paye' ? 'Payé' : 'Invité'}</span>
+      <span style={meal.type === 'paye' ? S.badgePaye : S.badgeInvite}>{meal.type === 'paye' ? 'Payé' : 'Invité'}</span>
       <span style={{ fontSize: 12, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: meal.commentaire_color || 'var(--text2)' }}>{meal.commentaire}</span>
       <div style={{ display: 'flex', gap: 4, justifyContent: 'flex-end' }}>
-        <button style={styles.btnIcon} onClick={onEdit}>✎</button>
-        <button style={{ ...styles.btnIcon, color: 'var(--red)' }} onClick={onDelete}>✕</button>
+        <button style={S.iconBtn} title="Modifier" onClick={onEdit}>✎</button>
+        <button style={{ ...S.iconBtn, color: 'var(--red)' }} title="Supprimer" onClick={onDelete}>✕</button>
       </div>
     </div>
   )
 }
 
-function Stat({ num, label, color, big }: { num: number; label: string; color: string; big?: boolean }) {
-  return <div><div style={{ fontSize: big ? 26 : 22, fontWeight: 700, color, fontFamily: 'Syne, sans-serif' }}>{num}</div><div style={{ fontSize: 11, color: 'var(--text3)' }}>{label}</div></div>
+function StatBox({ num, label, color, big }: { num: number; label: string; color: string; big?: boolean }) {
+  return (
+    <div>
+      <div style={{ fontSize: big ? 26 : 20, fontWeight: 700, color, lineHeight: 1 }}>{num}</div>
+      <div style={{ fontSize: 11, color: 'var(--text3)', marginTop: 3 }}>{label}</div>
+    </div>
+  )
 }
 
-const styles = {
-  card: { background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '24px' } as React.CSSProperties,
-  cardTitle: { fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 15, marginBottom: 20 } as React.CSSProperties,
-  pageTitle: { fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 20, letterSpacing: '-.02em' } as React.CSSProperties,
-  label: { display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 6 } as React.CSSProperties,
-  input: { width: '100%', background: 'var(--bg3)', border: '1px solid var(--border2)', borderRadius: 'var(--radius-sm)', padding: '8px 12px', fontSize: 13, color: 'var(--text)', outline: 'none' } as React.CSSProperties,
-  btnPrimary: { background: 'var(--accent)', color: '#000', border: 'none', borderRadius: 'var(--radius-sm)', padding: '9px 18px', fontWeight: 700, fontSize: 13, cursor: 'pointer', whiteSpace: 'nowrap' } as React.CSSProperties,
-  btnGhost: { background: 'var(--bg3)', color: 'var(--text2)', border: '1px solid var(--border2)', borderRadius: 'var(--radius-sm)', padding: '9px 18px', fontWeight: 500, fontSize: 13, cursor: 'pointer' } as React.CSSProperties,
-  btnIcon: { background: 'none', border: 'none', color: 'var(--text3)', cursor: 'pointer', padding: '4px 8px', fontSize: 14 } as React.CSSProperties,
-  tabBtn: { background: 'none', border: 'none', padding: '10px 18px', fontSize: 13, fontWeight: 500, cursor: 'pointer', transition: 'all .15s' } as React.CSSProperties,
-  navBtn: { background: 'var(--bg3)', border: '1px solid var(--border2)', color: 'var(--text)', borderRadius: 'var(--radius-sm)', width: 32, height: 32, cursor: 'pointer', fontSize: 16 } as React.CSSProperties,
-  badgePaye: { display: 'inline-block', padding: '2px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600, background: 'rgba(74,222,128,.12)', color: 'var(--green)', border: '1px solid rgba(74,222,128,.2)' } as React.CSSProperties,
-  badgeInvite: { display: 'inline-block', padding: '2px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600, background: 'rgba(96,165,250,.12)', color: 'var(--blue)', border: '1px solid rgba(96,165,250,.2)' } as React.CSSProperties,
-  overlay: { position: 'fixed', inset: 0, background: 'rgba(0,0,0,.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 } as React.CSSProperties,
-  modal: { background: 'var(--bg2)', border: '1px solid var(--border2)', borderRadius: 14, padding: 28, width: 460, maxWidth: '95vw', boxShadow: '0 24px 80px rgba(0,0,0,.8)' } as React.CSSProperties,
-  modalTitle: { fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 16, marginBottom: 20 } as React.CSSProperties,
+const S = {
+  header: { background: 'var(--bg)', borderBottom: '1px solid var(--border)', padding: '0 32px', position: 'sticky', top: 0, zIndex: 50, boxShadow: 'var(--shadow)' } as React.CSSProperties,
+  headerInner: { maxWidth: 980, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 64 } as React.CSSProperties,
+  logoWrap: { height: 36, background: '#000', borderRadius: 6, overflow: 'hidden', display: 'flex', alignItems: 'center' } as React.CSSProperties,
+  logo: { height: 36, width: 'auto', display: 'block' } as React.CSSProperties,
+  divider: { width: 1, height: 28, background: 'var(--border)', flexShrink: 0 } as React.CSSProperties,
+  appTitle: { fontWeight: 700, fontSize: 15, color: 'var(--primary)', letterSpacing: '-.01em' } as React.CSSProperties,
+  appSub: { fontSize: 11, color: 'var(--text3)', marginTop: 1 } as React.CSSProperties,
+  tabBtn: { border: 'none', padding: '7px 14px', fontSize: 13, cursor: 'pointer', borderRadius: 'var(--radius-sm)', transition: 'all .15s' } as React.CSSProperties,
+  main: { maxWidth: 980, margin: '0 auto', padding: '28px 32px' } as React.CSSProperties,
+  card: { background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '22px 24px', boxShadow: 'var(--shadow)' } as React.CSSProperties,
+  cardHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, gap: 12 } as React.CSSProperties,
+  cardTitle: { fontWeight: 600, fontSize: 15, color: 'var(--text)' } as React.CSSProperties,
+  pageTitle: { fontWeight: 700, fontSize: 20, color: 'var(--text)', letterSpacing: '-.02em' } as React.CSSProperties,
+  label: { display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--text2)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 6 } as React.CSSProperties,
+  input: { width: '100%', background: 'var(--bg)', border: '1px solid var(--border2)', borderRadius: 'var(--radius-sm)', padding: '8px 12px', fontSize: 13, color: 'var(--text)', outline: 'none', transition: 'border-color .15s' } as React.CSSProperties,
+  btnPrimary: { background: 'var(--primary)', color: '#fff', border: 'none', borderRadius: 'var(--radius-sm)', padding: '9px 20px', fontWeight: 600, fontSize: 13, cursor: 'pointer', transition: 'background .15s', whiteSpace: 'nowrap' } as React.CSSProperties,
+  btnGhost: { background: 'var(--bg3)', color: 'var(--text2)', border: '1px solid var(--border2)', borderRadius: 'var(--radius-sm)', padding: '9px 16px', fontWeight: 500, fontSize: 13, cursor: 'pointer' } as React.CSSProperties,
+  btnOutline: { background: 'transparent', color: 'var(--primary)', border: '1px solid var(--primary)', borderRadius: 'var(--radius-sm)', padding: '6px 14px', fontSize: 12, fontWeight: 500, cursor: 'pointer' } as React.CSSProperties,
+  btnDanger: { background: 'var(--red-light)', color: 'var(--red)', border: 'none', borderRadius: 'var(--radius-sm)', padding: '6px 14px', fontSize: 12, fontWeight: 500, cursor: 'pointer' } as React.CSSProperties,
+  iconBtn: { background: 'none', border: 'none', color: 'var(--text3)', cursor: 'pointer', padding: '4px 6px', fontSize: 14, borderRadius: 4, transition: 'all .1s' } as React.CSSProperties,
+  navBtn: { background: 'var(--bg)', border: '1px solid var(--border2)', color: 'var(--primary)', borderRadius: 'var(--radius-sm)', width: 32, height: 32, cursor: 'pointer', fontSize: 18, fontWeight: 500, display: 'flex', alignItems: 'center', justifyContent: 'center' } as React.CSSProperties,
+  badge: { background: 'var(--primary-light)', color: 'var(--primary)', padding: '3px 10px', borderRadius: 20, fontSize: 12, fontWeight: 600 } as React.CSSProperties,
+  badgePaye: { display: 'inline-block', padding: '2px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600, background: 'var(--secondary-light)', color: '#3a4a00', border: '1px solid #c5d96e' } as React.CSSProperties,
+  badgeInvite: { display: 'inline-block', padding: '2px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600, background: 'var(--primary-light)', color: 'var(--primary)', border: '1px solid #b3cceb' } as React.CSSProperties,
+  tableWrap: { marginTop: 16 } as React.CSSProperties,
+  tableHead: { display: 'grid', gridTemplateColumns: '110px 1fr 90px 1fr 70px', gap: 12, padding: '6px 0 10px', borderBottom: '1px solid var(--border)', fontSize: 11, fontWeight: 600, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '.05em' } as React.CSSProperties,
+  tableRow: { display: 'grid', gridTemplateColumns: '110px 1fr 90px 1fr 70px', gap: 12, alignItems: 'center', padding: '11px 0', borderBottom: '1px solid var(--border)' } as React.CSSProperties,
+  summaryCard: { background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '18px 20px', boxShadow: 'var(--shadow)', borderLeft: '3px solid var(--secondary)' } as React.CSSProperties,
+  emptyState: { textAlign: 'center', padding: '32px 0', color: 'var(--text3)', fontSize: 13 } as React.CSSProperties,
+  overlay: { position: 'fixed', inset: 0, background: 'rgba(15,23,42,.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, backdropFilter: 'blur(2px)' } as React.CSSProperties,
+  modal: { background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 14, padding: 28, width: 480, maxWidth: '95vw', boxShadow: '0 20px 60px rgba(0,0,0,.15)' } as React.CSSProperties,
+  modalHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 } as React.CSSProperties,
+  modalTitle: { fontWeight: 700, fontSize: 16, color: 'var(--text)' } as React.CSSProperties,
+  closeBtn: { background: 'none', border: 'none', color: 'var(--text3)', cursor: 'pointer', fontSize: 16, padding: '2px 6px', borderRadius: 4 } as React.CSSProperties,
+  colorTrigger: { display: 'flex', alignItems: 'center', gap: 8, background: 'var(--bg)', border: '1px solid var(--border2)', borderRadius: 'var(--radius-sm)', padding: '7px 10px', cursor: 'pointer', color: 'var(--text)', width: '100%' } as React.CSSProperties,
+  colorPanel: { position: 'absolute', top: '100%', left: 0, zIndex: 200, marginTop: 4, background: 'var(--bg)', border: '1px solid var(--border2)', borderRadius: 'var(--radius)', padding: 14, boxShadow: 'var(--shadow-md)', width: 230, minWidth: 200 } as React.CSSProperties,
 }
