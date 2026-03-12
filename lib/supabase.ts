@@ -23,4 +23,7 @@ export type Meal = {
   commentaire_color: string
   count_color: string
   created_at: string
+  target_month: string | null
+  employee?: Employee
+  inviter?: Employee
 }
