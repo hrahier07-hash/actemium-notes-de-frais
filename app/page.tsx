@@ -78,10 +78,12 @@ export default function Home() {
   const [meals, setMeals] = useState<Meal[]>([])
   const [loading, setLoading] = useState(true)
   const [currentMonth, setCurrentMonth] = useState(new Date().getMonth())
-  const [currentYear] = useState(new Date().getFullYear())
+  const [currentYear, setCurrentYear] = useState(new Date().getFullYear())
 
+  const nowYM = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}` }
   const [mForm, setMForm] = useState({
     employeeId: '', date: new Date().toISOString().slice(0, 10),
+    targetMonth: nowYM(),
     type: 'paye' as 'paye' | 'invite', invites: [] as string[],
     commentaire: '', commentaireColor: '#0f172a', countColor: '#00336B',
     empSearch: '', inviteSearch: ''
@@ -143,16 +145,16 @@ export default function Home() {
     const emp = empById[mForm.employeeId]
     const inserts: Partial<Meal>[] = []
     if (mForm.type === 'paye') {
-      inserts.push({ employee_id: mForm.employeeId, date: mForm.date, type: 'paye', invited_by: null, commentaire: mForm.commentaire || genCommentaire('paye', mForm.date), commentaire_color: mForm.commentaireColor, count_color: mForm.countColor })
+      const tm = mForm.targetMonth + '-01'; inserts.push({ employee_id: mForm.employeeId, date: mForm.date, type: 'paye', invited_by: null, commentaire: mForm.commentaire || genCommentaire('paye', mForm.date), commentaire_color: mForm.commentaireColor, count_color: mForm.countColor, target_month: tm })
       for (const invId of mForm.invites) {
-        inserts.push({ employee_id: invId, date: mForm.date, type: 'invite', invited_by: mForm.employeeId, commentaire: genCommentaire('invite', mForm.date, `${emp.prenom} ${emp.nom}`), commentaire_color: mForm.commentaireColor, count_color: mForm.countColor })
+        inserts.push({ employee_id: invId, date: mForm.date, type: 'invite', invited_by: mForm.employeeId, commentaire: genCommentaire('invite', mForm.date, `${emp.prenom} ${emp.nom}`), commentaire_color: mForm.commentaireColor, count_color: mForm.countColor, target_month: tm })
       }
     } else {
-      inserts.push({ employee_id: mForm.employeeId, date: mForm.date, type: 'invite', invited_by: null, commentaire: mForm.commentaire || genCommentaire('invite', mForm.date), commentaire_color: mForm.commentaireColor, count_color: mForm.countColor })
+      const tm2 = mForm.targetMonth + '-01'; inserts.push({ employee_id: mForm.employeeId, date: mForm.date, type: 'invite', invited_by: null, commentaire: mForm.commentaire || genCommentaire('invite', mForm.date), commentaire_color: mForm.commentaireColor, count_color: mForm.countColor, target_month: tm2 })
     }
     const { error } = await supabase.from('meals').insert(inserts)
     if (error) { showToast('Erreur lors de l\'enregistrement', 'err'); return }
-    setMForm(f => ({ ...f, employeeId: '', invites: [], commentaire: '', empSearch: '', inviteSearch: '' }))
+    setMForm(f => ({ ...f, employeeId: '', invites: [], commentaire: '', empSearch: '', inviteSearch: '', targetMonth: nowYM() }))
     showToast(`${inserts.length} repas enregistré${inserts.length > 1 ? 's' : ''} ✓`)
     fetchAll()
   }
@@ -186,8 +188,9 @@ export default function Home() {
   }
 
   const monthMeals = useMemo(() => meals.filter(m => {
-    const d = new Date(m.date)
-    return d.getMonth() === currentMonth && d.getFullYear() === currentYear
+    const tm = m.target_month ? m.target_month.slice(0, 7) : m.date.slice(0, 7)
+    const [y, mo] = tm.split('-').map(Number)
+    return mo - 1 === currentMonth && y === currentYear
   }), [meals, currentMonth, currentYear])
 
   const summary = useMemo(() => employees.reduce((acc, e) => {
@@ -290,7 +293,7 @@ export default function Home() {
                   <div style={S.cardHeader}>
                     <span style={S.cardTitle}>Ajouter un repas</span>
                   </div>
-                  <div className="acm-grid3">
+                  <div className="acm-grid4">
                     <div>
                       <label style={S.label}>Salarié</label>
                       <SearchInput value={mForm.empSearch} onChange={v => setMForm(f => ({ ...f, empSearch: v, employeeId: '' }))} placeholder="Filtrer les salariés…" />
@@ -300,8 +303,12 @@ export default function Home() {
                       </select>
                     </div>
                     <div>
-                      <label style={S.label}>Date</label>
+                      <label style={S.label}>Date du repas</label>
                       <input type="date" style={S.input} value={mForm.date} onChange={e => setMForm(f => ({ ...f, date: e.target.value }))} />
+                    </div>
+                    <div>
+                      <label style={S.label}>Mois de rattachement <span style={{ color: 'var(--secondary)', fontWeight: 700, textTransform: 'none', letterSpacing: 0, fontSize: 10 }}>●</span></label>
+                      <input type="month" style={S.input} value={mForm.targetMonth} onChange={e => setMForm(f => ({ ...f, targetMonth: e.target.value }))} />
                     </div>
                     <div>
                       <label style={S.label}>Type de repas</label>
@@ -423,9 +430,15 @@ export default function Home() {
                     <p style={{ fontSize: 13, color: 'var(--text2)' }}>Résumé et détail des repas par salarié</p>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <button style={S.navBtn} onClick={() => setCurrentMonth(m => Math.max(0, m - 1))}>‹</button>
-                    <span style={{ fontWeight: 600, minWidth: 140, textAlign: 'center', color: 'var(--primary)', fontSize: 15 }}>{MONTHS[currentMonth]} {currentYear}</span>
-                    <button style={S.navBtn} onClick={() => setCurrentMonth(m => Math.min(11, m + 1))}>›</button>
+                    <button style={S.navBtn} onClick={() => {
+                      if (currentMonth === 0) { setCurrentMonth(11); setCurrentYear(y => y - 1) }
+                      else setCurrentMonth(m => m - 1)
+                    }}>‹</button>
+                    <span style={{ fontWeight: 600, minWidth: 160, textAlign: 'center', color: 'var(--primary)', fontSize: 15 }}>{MONTHS[currentMonth]} {currentYear}</span>
+                    <button style={S.navBtn} onClick={() => {
+                      if (currentMonth === 11) { setCurrentMonth(0); setCurrentYear(y => y + 1) }
+                      else setCurrentMonth(m => m + 1)
+                    }}>›</button>
                   </div>
                 </div>
 
