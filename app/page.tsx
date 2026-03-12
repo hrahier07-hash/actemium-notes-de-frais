@@ -211,7 +211,7 @@ export default function Home() {
   }, {} as Record<string, { paye: number; invite: number }>), [employees, monthMeals])
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
+    <div className="acm-shell">
       {toast.msg && (
         <div style={{ position: 'fixed', bottom: 24, right: 24, zIndex: 999, background: toast.type === 'ok' ? 'var(--primary)' : 'var(--red)', color: '#fff', padding: '11px 20px', borderRadius: 8, fontWeight: 600, fontSize: 13, boxShadow: '0 4px 20px rgba(0,0,0,.15)', display: 'flex', alignItems: 'center', gap: 8 }}>
           <span>{toast.type === 'ok' ? '✓' : '✕'}</span> {toast.msg}
@@ -276,29 +276,43 @@ export default function Home() {
         </div>
       )}
 
-      <header style={S.header} className="acm-header">
-        <div style={S.headerInner}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-            <div style={S.logoWrap}>
-              <img src={LOGO_SRC} alt="Actemium" style={S.logo} />
-            </div>
-            <div style={S.divider} />
-            <div>
-              <div style={S.appTitle}>Gestion des repas sur notes de frais</div>
-              <div style={S.appSub}>{employees.length} salarié{employees.length !== 1 ? 's' : ''} actifs</div>
-            </div>
+      {/* ── Sidebar ── */}
+      <aside className="acm-sidebar">
+        <div className="acm-sidebar-logo">
+          <img src={LOGO_SRC} alt="Actemium" style={{ height: 36, width: 'auto', flexShrink: 0 }} />
+          <div className="acm-sidebar-logo-text" style={{ minWidth: 0 }}>
+            <div style={{ fontWeight: 700, fontSize: 12, color: 'var(--primary)', lineHeight: 1.2, letterSpacing: '-.01em' }}>Gestion des repas</div>
+            <div style={{ fontSize: 11, color: 'var(--text3)', marginTop: 2 }}>notes de frais</div>
           </div>
-          <nav style={{ display: 'flex', gap: 4 }}>
-            {(['saisie', 'mensuel', 'salaries'] as Tab[]).map(t => (
-              <button key={t} onClick={() => setTab(t)} style={{ ...S.tabBtn, background: tab === t ? 'var(--primary-light)' : 'transparent', color: tab === t ? 'var(--primary)' : 'var(--text2)', fontWeight: tab === t ? 600 : 400 }}>
-                {t === 'saisie' ? '✎ Saisie' : t === 'mensuel' ? '◫ Mensuel' : '☰ Salariés'}
-              </button>
-            ))}
-          </nav>
         </div>
-      </header>
+        <nav className="acm-nav">
+          {([
+            { key: 'saisie',   icon: '✎', label: 'Saisie repas' },
+            { key: 'mensuel',  icon: '◫', label: 'Vue mensuelle' },
+            { key: 'salaries', icon: '☰', label: 'Salariés' },
+          ] as { key: Tab; icon: string; label: string }[]).map(item => (
+            <button key={item.key} onClick={() => setTab(item.key)}
+              className={`acm-nav-item${tab === item.key ? ' active' : ''}`}>
+              <span className="nav-icon">{item.icon}</span>
+              <span className="nav-label">{item.label}</span>
+            </button>
+          ))}
+        </nav>
+        <div className="acm-sidebar-footer">
+          <div style={{ fontWeight: 500, color: 'var(--text2)' }}>{employees.length} salarié{employees.length !== 1 ? 's' : ''} actifs</div>
+        </div>
+      </aside>
 
-      <main style={S.main} className="acm-main">
+      {/* ── Main wrapper ── */}
+      <div className="acm-main-wrapper">
+        <div className="acm-topbar">
+          <span style={{ fontWeight: 600, fontSize: 14, color: 'var(--text)', letterSpacing: '-.01em' }}>
+            {tab === 'saisie' ? 'Saisie des repas' : tab === 'mensuel' ? 'Vue mensuelle' : 'Gestion des salariés'}
+          </span>
+          <span style={{ height: 16, width: 1, background: 'var(--border2)', margin: '0 4px' }} />
+          <span style={{ fontSize: 12, color: 'var(--text3)' }}>Actemium — Notes de frais</span>
+        </div>
+      <main className="acm-main">
         {loading ? (
           <div style={{ textAlign: 'center', padding: '80px 0', color: 'var(--text3)' }}>
             <div style={{ fontSize: 28, marginBottom: 12 }}>⟳</div>
@@ -455,7 +469,7 @@ export default function Home() {
                 {/* ── En-tête navigation mois ── */}
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
                   <div>
-                    <h1 style={S.pageTitle}>Vue mensuelle</h1>
+                    <div><h1 style={S.pageTitle}>Vue mensuelle</h1><p style={S.pageSub}>Résumé et détail des repas par salarié</p></div>
                     <p style={{ fontSize: 13, color: 'var(--text2)' }}>Résumé et détail des repas par salarié</p>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -522,7 +536,7 @@ export default function Home() {
                           const total = s.paye + s.invite
                           const countColor = monthMeals.find(m => m.employee_id === e.id)?.count_color || 'var(--primary)'
                           return (
-                            <div key={e.id} style={S.summaryRow}>
+                            <div key={e.id} style={S.summaryRow} className="acm-summary-row">
                               <span style={{ fontWeight: 600, color: 'var(--text)', fontSize: 13 }}>{e.prenom} {e.nom}</span>
                               <span style={{ textAlign: 'center', fontWeight: 700, fontSize: 15, color: '#0c1524' }}>{s.paye}</span>
                               <span style={{ textAlign: 'center', fontWeight: 700, fontSize: 15, color: '#0c1524' }}>{s.invite}</span>
@@ -651,7 +665,7 @@ export default function Home() {
 
             {tab === 'salaries' && (
               <div style={{ display: 'grid', gap: 20 }}>
-                <h1 style={S.pageTitle}>Gestion des salariés</h1>
+                <div><h1 style={S.pageTitle}>Salariés</h1><p style={S.pageSub}>Gérez les collaborateurs actifs</p></div>
                 <div style={S.card}>
                   <div style={S.cardTitle}>{editEmp ? 'Modifier le salarié' : 'Nouveau salarié'}</div>
                   <div className="acm-emp-form">
@@ -689,12 +703,22 @@ export default function Home() {
           </>
         )}
       </main>
+      </div>{/* end acm-main-wrapper */}
 
       <style>{`
-        @keyframes fadeUp { from { opacity:0; transform:translateY(6px) } to { opacity:1; transform:none } }
+        @keyframes fadeUp { from { opacity:0; transform:translateY(8px) } to { opacity:1; transform:none } }
+        @keyframes fadeIn { from { opacity:0 } to { opacity:1 } }
         input[type=date]::-webkit-calendar-picker-indicator { opacity: 0.5; cursor: pointer; }
         button:disabled { opacity: 0.4; cursor: not-allowed; }
         select { appearance: auto; }
+        .acm-tr { transition: background 150ms ease; }
+        .acm-tr:hover { background: var(--bg2) !important; }
+        .acm-summary-row { transition: background 150ms ease; }
+        .acm-summary-row:hover { background: var(--bg2) !important; }
+        input:hover { border-color: var(--border2) !important; }
+        button.acm-btn-primary:hover { background: var(--primary-hover) !important; box-shadow: 0 4px 12px rgba(0,51,107,.3) !important; transform: translateY(-1px); }
+        button.acm-btn-ghost:hover { background: var(--bg3) !important; border-color: var(--border2) !important; }
+        .acm-card-hover:hover { box-shadow: 0 4px 16px rgba(0,51,107,.08) !important; transform: translateY(-1px); transition: all 200ms ease; }
       `}</style>
     </div>
   )
@@ -702,7 +726,7 @@ export default function Home() {
 
 function MealRow({ meal, empName, onEdit, onDelete }: { meal: Meal; empName: string; onEdit: () => void; onDelete: () => void }) {
   return (
-    <div style={S.tableRow}>
+    <div style={S.tableRow} className="acm-tr">
       <span style={{ fontSize: 12, color: 'var(--text3)', fontFamily: 'monospace' }}>{formatDate(meal.date)}</span>
       <span style={{ fontWeight: 500, fontSize: 13 }}>{empName}</span>
       <span style={meal.type === 'paye' ? S.badgePaye : S.badgeInvite}>{meal.type === 'paye' ? 'Payé' : 'Invité'}</span>
@@ -725,42 +749,41 @@ function StatBox({ num, label, color, big }: { num: number; label: string; color
 }
 
 const S = {
-  header: { background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(12px)', borderBottom: '1px solid var(--border)', position: 'sticky', top: 0, zIndex: 50, boxShadow: '0 1px 0 0 var(--border), 0 4px 16px rgba(0,51,107,.05)' } as React.CSSProperties,
-  headerInner: { maxWidth: 1280, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 72 } as React.CSSProperties,
-  logoWrap: { height: 44, display: 'flex', alignItems: 'center' } as React.CSSProperties,
-  logo: { height: 44, width: 'auto', display: 'block' } as React.CSSProperties,
-  divider: { width: 1, height: 32, background: 'var(--border2)', flexShrink: 0, marginLeft: 4 } as React.CSSProperties,
-  appTitle: { fontWeight: 700, fontSize: 14, color: 'var(--primary)', letterSpacing: '-.015em', lineHeight: 1.2 } as React.CSSProperties,
-  appSub: { fontSize: 11, color: 'var(--text3)', marginTop: 2, fontWeight: 400 } as React.CSSProperties,
-  tabBtn: { border: 'none', padding: '7px 16px', fontSize: 13, cursor: 'pointer', borderRadius: 8, transition: 'all .15s', fontWeight: 500 } as React.CSSProperties,
-  main: { } as React.CSSProperties,
-  card: { background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 14, padding: '24px 28px', boxShadow: '0 1px 3px rgba(0,0,0,.06), 0 4px 12px rgba(0,51,107,.04)' } as React.CSSProperties,
+  // ── Cards ──
+  card: { background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 12, padding: '24px', boxShadow: 'var(--shadow)' } as React.CSSProperties,
   cardHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, gap: 12 } as React.CSSProperties,
-  cardTitle: { fontWeight: 700, fontSize: 15, color: 'var(--text)', letterSpacing: '-.01em' } as React.CSSProperties,
-  pageTitle: { fontWeight: 800, fontSize: 22, color: 'var(--text)', letterSpacing: '-.03em' } as React.CSSProperties,
-  label: { display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--text2)', textTransform: 'uppercase', letterSpacing: '.07em', marginBottom: 6 } as React.CSSProperties,
-  input: { width: '100%', background: '#fafbfc', border: '1.5px solid var(--border)', borderRadius: 8, padding: '9px 13px', fontSize: 13, color: 'var(--text)', outline: 'none', transition: 'border-color .15s, box-shadow .15s' } as React.CSSProperties,
-  btnPrimary: { background: 'linear-gradient(135deg, var(--primary) 0%, #004d9f 100%)', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 22px', fontWeight: 600, fontSize: 13, cursor: 'pointer', transition: 'opacity .15s, transform .1s', whiteSpace: 'nowrap', boxShadow: '0 2px 8px rgba(0,51,107,.25)' } as React.CSSProperties,
-  btnGhost: { background: 'var(--bg3)', color: 'var(--text2)', border: '1.5px solid var(--border)', borderRadius: 8, padding: '9px 18px', fontWeight: 500, fontSize: 13, cursor: 'pointer', transition: 'all .15s' } as React.CSSProperties,
-  btnOutline: { background: 'transparent', color: 'var(--primary)', border: '1.5px solid var(--primary)', borderRadius: 8, padding: '6px 14px', fontSize: 12, fontWeight: 600, cursor: 'pointer', transition: 'all .15s' } as React.CSSProperties,
-  btnDanger: { background: 'var(--red-light)', color: 'var(--red)', border: '1.5px solid #fca5a5', borderRadius: 8, padding: '6px 14px', fontSize: 12, fontWeight: 600, cursor: 'pointer', transition: 'all .15s' } as React.CSSProperties,
-  iconBtn: { background: 'none', border: 'none', color: 'var(--text3)', cursor: 'pointer', padding: '5px 7px', fontSize: 14, borderRadius: 6, transition: 'all .1s' } as React.CSSProperties,
-  navBtn: { background: 'var(--bg)', border: '1.5px solid var(--border)', color: 'var(--primary)', borderRadius: 8, width: 34, height: 34, cursor: 'pointer', fontSize: 18, fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all .15s' } as React.CSSProperties,
-  badge: { background: 'linear-gradient(135deg, var(--primary-light) 0%, #dbeafe 100%)', color: 'var(--primary)', padding: '4px 12px', borderRadius: 20, fontSize: 12, fontWeight: 600, border: '1px solid #bcd4f0' } as React.CSSProperties,
-  badgePaye: { display: 'inline-block', padding: '3px 11px', borderRadius: 20, fontSize: 11, fontWeight: 700, background: 'linear-gradient(135deg, #e8f7da 0%, #d4edb5 100%)', color: '#2d4a00', border: '1px solid #bada7a' } as React.CSSProperties,
-  badgeInvite: { display: 'inline-block', padding: '3px 11px', borderRadius: 20, fontSize: 11, fontWeight: 700, background: 'linear-gradient(135deg, #e0ecfb 0%, #cde0f7 100%)', color: 'var(--primary)', border: '1px solid #9dc4ee' } as React.CSSProperties,
+  cardTitle: { fontWeight: 600, fontSize: 15, color: 'var(--text)', letterSpacing: '-.015em' } as React.CSSProperties,
+  pageTitle: { fontWeight: 600, fontSize: 22, color: 'var(--text)', letterSpacing: '-.025em', lineHeight: 1.3 } as React.CSSProperties,
+  pageSub: { fontSize: 13, color: 'var(--text3)', marginTop: 4, fontWeight: 400 } as React.CSSProperties,
+  // ── Form ──
+  label: { display: 'block', fontSize: 12, fontWeight: 500, color: 'var(--text2)', letterSpacing: '.02em', marginBottom: 6 } as React.CSSProperties,
+  input: { width: '100%', background: 'var(--bg)', border: '1px solid var(--border2)', borderRadius: 8, padding: '10px 13px', fontSize: 13.5, color: 'var(--text)', outline: 'none', transition: 'border-color .15s, box-shadow .15s', height: 40 } as React.CSSProperties,
+  // ── Buttons ──
+  btnPrimary: { background: 'var(--primary)', color: '#fff', border: 'none', borderRadius: 8, padding: '0 20px', fontWeight: 500, fontSize: 13.5, cursor: 'pointer', transition: 'background .15s, box-shadow .15s, transform .1s', whiteSpace: 'nowrap', height: 40, display: 'inline-flex', alignItems: 'center', gap: 6 } as React.CSSProperties,
+  btnGhost: { background: 'var(--bg)', color: 'var(--text2)', border: '1px solid var(--border2)', borderRadius: 8, padding: '0 16px', fontWeight: 500, fontSize: 13, cursor: 'pointer', transition: 'all .15s', height: 36, display: 'inline-flex', alignItems: 'center' } as React.CSSProperties,
+  btnOutline: { background: 'transparent', color: 'var(--primary)', border: '1px solid var(--border2)', borderRadius: 8, padding: '0 14px', fontSize: 13, fontWeight: 500, cursor: 'pointer', transition: 'all .15s', height: 34, display: 'inline-flex', alignItems: 'center' } as React.CSSProperties,
+  btnDanger: { background: 'var(--red-light)', color: 'var(--red)', border: '1px solid #fecaca', borderRadius: 8, padding: '0 14px', fontSize: 13, fontWeight: 500, cursor: 'pointer', transition: 'all .15s', height: 34, display: 'inline-flex', alignItems: 'center' } as React.CSSProperties,
+  iconBtn: { background: 'none', border: 'none', color: 'var(--text3)', cursor: 'pointer', padding: '5px 6px', fontSize: 14, borderRadius: 6, transition: 'color .1s, background .1s', display: 'inline-flex', alignItems: 'center' } as React.CSSProperties,
+  navBtn: { background: 'var(--bg)', border: '1px solid var(--border2)', color: 'var(--primary)', borderRadius: 8, width: 34, height: 34, cursor: 'pointer', fontSize: 17, fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all .15s' } as React.CSSProperties,
+  // ── Badges ──
+  badge: { background: 'var(--primary-light)', color: 'var(--primary)', padding: '3px 10px', borderRadius: 20, fontSize: 12, fontWeight: 500 } as React.CSSProperties,
+  badgePaye: { display: 'inline-flex', alignItems: 'center', padding: '3px 10px', borderRadius: 20, fontSize: 12, fontWeight: 500, background: '#ecfdf5', color: '#166534' } as React.CSSProperties,
+  badgeInvite: { display: 'inline-flex', alignItems: 'center', padding: '3px 10px', borderRadius: 20, fontSize: 12, fontWeight: 500, background: 'var(--primary-light)', color: 'var(--primary)' } as React.CSSProperties,
+  // ── Tables ──
   tableWrap: { } as React.CSSProperties,
-  tableHead: { display: 'grid', gridTemplateColumns: 'clamp(90px,10%,130px) 1fr clamp(70px,8%,100px) 1fr clamp(60px,7%,80px)', gap: 12, padding: '6px 0 10px', borderBottom: '1px solid var(--border)', fontSize: 11, fontWeight: 600, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '.05em' } as React.CSSProperties,
-  tableRow: { display: 'grid', gridTemplateColumns: 'clamp(90px,10%,130px) 1fr clamp(70px,8%,100px) 1fr clamp(60px,7%,80px)', gap: 12, alignItems: 'center', padding: '11px 0', borderBottom: '1px solid var(--border)' } as React.CSSProperties,
-  summaryCard: { background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 14, padding: '18px 22px', boxShadow: '0 1px 3px rgba(0,0,0,.06), 0 4px 12px rgba(0,51,107,.04)', borderLeft: '3px solid var(--secondary)' } as React.CSSProperties,
-  summaryHead: { display: 'grid', gridTemplateColumns: '1fr 80px 80px 80px', gap: 12, padding: '8px 16px 10px', borderBottom: '1.5px solid var(--border)', fontSize: 11, fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '.07em', color: 'var(--primary)' } as React.CSSProperties,
-  summaryRow: { display: 'grid', gridTemplateColumns: '1fr 80px 80px 80px', gap: 12, alignItems: 'center', padding: '11px 16px', borderBottom: '1px solid var(--border)', transition: 'background .1s' } as React.CSSProperties,
-  emptyState: { textAlign: 'center', padding: '40px 0', color: 'var(--text3)', fontSize: 13 } as React.CSSProperties,
-  overlay: { position: 'fixed', inset: 0, background: 'rgba(8,15,35,.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, backdropFilter: 'blur(6px)' } as React.CSSProperties,
-  modal: { background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 16, padding: 30, width: 500, maxWidth: '95vw', boxShadow: '0 24px 80px rgba(0,0,0,.18), 0 0 0 1px rgba(255,255,255,.5)' } as React.CSSProperties,
-  modalHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 22, paddingBottom: 16, borderBottom: '1px solid var(--border)' } as React.CSSProperties,
-  modalTitle: { fontWeight: 700, fontSize: 16, color: 'var(--text)', letterSpacing: '-.01em' } as React.CSSProperties,
-  closeBtn: { background: 'var(--bg3)', border: '1px solid var(--border)', color: 'var(--text2)', cursor: 'pointer', fontSize: 14, padding: '4px 8px', borderRadius: 6, lineHeight: 1, fontWeight: 600 } as React.CSSProperties,
-  colorTrigger: { display: 'flex', alignItems: 'center', gap: 8, background: '#fafbfc', border: '1.5px solid var(--border)', borderRadius: 8, padding: '8px 12px', cursor: 'pointer', color: 'var(--text)', width: '100%' } as React.CSSProperties,
-  colorPanel: { position: 'absolute', top: '100%', left: 0, zIndex: 200, marginTop: 6, background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 12, padding: 14, boxShadow: '0 8px 32px rgba(0,0,0,.12)', width: 230, minWidth: 200 } as React.CSSProperties,
+  tableHead: { display: 'grid', gridTemplateColumns: 'clamp(90px,10%,130px) 1fr clamp(70px,8%,100px) 1fr clamp(60px,7%,80px)', gap: 12, padding: '8px 12px 10px', borderBottom: '1px solid var(--border)', fontSize: 11, fontWeight: 600, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '.06em' } as React.CSSProperties,
+  tableRow: { display: 'grid', gridTemplateColumns: 'clamp(90px,10%,130px) 1fr clamp(70px,8%,100px) 1fr clamp(60px,7%,80px)', gap: 12, alignItems: 'center', padding: '12px 12px', borderBottom: '1px solid var(--border)', transition: 'background .1s' } as React.CSSProperties,
+  summaryCard: { background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 12, padding: '20px 24px', boxShadow: 'var(--shadow)', borderLeft: '3px solid var(--secondary)' } as React.CSSProperties,
+  summaryHead: { display: 'grid', gridTemplateColumns: '1fr 80px 80px 80px', gap: 12, padding: '8px 16px 10px', borderBottom: '1px solid var(--border)', fontSize: 11, fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '.06em', color: 'var(--primary)' } as React.CSSProperties,
+  summaryRow: { display: 'grid', gridTemplateColumns: '1fr 80px 80px 80px', gap: 12, alignItems: 'center', padding: '12px 16px', borderBottom: '1px solid var(--border)', transition: 'background .15s' } as React.CSSProperties,
+  emptyState: { textAlign: 'center', padding: '48px 0', color: 'var(--text3)', fontSize: 13 } as React.CSSProperties,
+  // ── Modals ──
+  overlay: { position: 'fixed', inset: 0, background: 'rgba(8,15,35,.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, backdropFilter: 'blur(8px)' } as React.CSSProperties,
+  modal: { background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 14, padding: '28px 28px 24px', width: 500, maxWidth: '95vw', boxShadow: '0 20px 60px rgba(0,0,0,.15), 0 0 0 1px var(--border)' } as React.CSSProperties,
+  modalHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, paddingBottom: 16, borderBottom: '1px solid var(--border)' } as React.CSSProperties,
+  modalTitle: { fontWeight: 600, fontSize: 15, color: 'var(--text)', letterSpacing: '-.01em' } as React.CSSProperties,
+  closeBtn: { background: 'var(--bg3)', border: '1px solid var(--border)', color: 'var(--text2)', cursor: 'pointer', fontSize: 13, padding: '5px 9px', borderRadius: 6, lineHeight: 1, fontWeight: 500, transition: 'all .15s' } as React.CSSProperties,
+  // ── Color picker ──
+  colorTrigger: { display: 'flex', alignItems: 'center', gap: 8, background: 'var(--bg)', border: '1px solid var(--border2)', borderRadius: 8, padding: '8px 12px', cursor: 'pointer', color: 'var(--text)', width: '100%', height: 40, transition: 'border-color .15s' } as React.CSSProperties,
+  colorPanel: { position: 'absolute', top: '100%', left: 0, zIndex: 200, marginTop: 6, background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 12, padding: 14, boxShadow: '0 8px 32px rgba(0,0,0,.10)', width: 230, minWidth: 200 } as React.CSSProperties,
 }
