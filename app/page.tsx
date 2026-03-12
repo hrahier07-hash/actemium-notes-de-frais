@@ -85,7 +85,7 @@ export default function Home() {
     employeeId: '', date: new Date().toISOString().slice(0, 10),
     targetMonth: nowYM(),
     type: 'paye' as 'paye' | 'invite', invites: [] as string[],
-    commentaire: '', commentaireColor: '#0f172a', countColor: '#00336B',
+    commentaire: '', commentaireColor: '#0f172a', countColor: '#a8e6a3',
     empSearch: '', inviteSearch: ''
   })
   const [editMeal, setEditMeal] = useState<Meal | null>(null)
@@ -225,7 +225,23 @@ export default function Home() {
               <div><label style={S.label}>Commentaire</label><input style={S.input} value={editMeal.commentaire || ''} onChange={e => setEditMeal(m => m ? { ...m, commentaire: e.target.value } : m)} /></div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                 <ColorPicker label="Couleur commentaire" value={editMeal.commentaire_color || '#0f172a'} onChange={c => setEditMeal(m => m ? { ...m, commentaire_color: c } : m)} />
-                <ColorPicker label="Couleur compteur" value={editMeal.count_color || '#00336B'} onChange={c => setEditMeal(m => m ? { ...m, count_color: c } : m)} />
+                <div>
+                        <label style={S.label}>Imputation</label>
+                        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 4 }}>
+                          {([
+                            { label: 'Vélizy',     color: '#a8e6a3' },
+                            { label: 'Chanteloup', color: '#a3d4f5' },
+                            { label: 'Verneuil',   color: '#fde89a' },
+                            { label: 'Cantine',    color: '#f5b8c8' },
+                          ] as { label: string; color: string }[]).map(imp => (
+                            <button key={imp.label} type="button"
+                              onClick={() => setEditMeal(m => m ? { ...m, count_color: imp.color } : m)}
+                              style={{ padding: '4px 10px', borderRadius: 20, fontSize: 12, fontWeight: editMeal.count_color === imp.color ? 700 : 500, cursor: 'pointer', border: editMeal.count_color === imp.color ? '2px solid #555' : '2px solid transparent', background: imp.color, color: '#333', transition: 'all .15s', boxShadow: editMeal.count_color === imp.color ? '0 0 0 2px rgba(0,0,0,.15)' : 'none' }}>
+                              {imp.label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
               </div>
               <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', paddingTop: 4 }}>
                 <button style={S.btnGhost} onClick={() => setEditMeal(null)}>Annuler</button>
@@ -331,7 +347,23 @@ export default function Home() {
                     </div>
                     <div className="acm-colors">
                       <ColorPicker label="Couleur commentaire" value={mForm.commentaireColor} onChange={c => setMForm(f => ({ ...f, commentaireColor: c }))} />
-                      <ColorPicker label="Couleur compteur" value={mForm.countColor} onChange={c => setMForm(f => ({ ...f, countColor: c }))} />
+                      <div>
+                        <label style={S.label}>Imputation</label>
+                        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 4 }}>
+                          {([
+                            { label: 'Vélizy',     color: '#a8e6a3' },
+                            { label: 'Chanteloup', color: '#a3d4f5' },
+                            { label: 'Verneuil',   color: '#fde89a' },
+                            { label: 'Cantine',    color: '#f5b8c8' },
+                          ] as { label: string; color: string }[]).map(imp => (
+                            <button key={imp.label} type="button"
+                              onClick={() => setMForm(f => ({ ...f, countColor: imp.color }))}
+                              style={{ padding: '4px 10px', borderRadius: 20, fontSize: 12, fontWeight: mForm.countColor === imp.color ? 700 : 500, cursor: 'pointer', border: mForm.countColor === imp.color ? '2px solid #555' : '2px solid transparent', background: imp.color, color: '#333', transition: 'all .15s', boxShadow: mForm.countColor === imp.color ? '0 0 0 2px rgba(0,0,0,.15)' : 'none' }}>
+                              {imp.label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
                     </div>
                   </div>
 
