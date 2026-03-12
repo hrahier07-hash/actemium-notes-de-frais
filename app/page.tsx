@@ -525,11 +525,11 @@ export default function Home() {
                           const total = s.paye + s.invite
                           const countColor = monthMeals.find(m => m.employee_id === e.id)?.count_color || 'var(--primary)'
                           return (
-                            <div key={e.id} style={{ ...S.summaryRow, background: i % 2 === 0 ? 'var(--bg)' : 'var(--bg2)', borderRadius: i === 0 ? '0' : undefined }}>
+                            <div key={e.id} style={{ ...S.summaryRow, background: (() => { const c = countColor.startsWith('#') ? countColor : '#a8e6a3'; const h=c.replace('#',''); const r=parseInt(h.slice(0,2),16),g=parseInt(h.slice(2,4),16),b=parseInt(h.slice(4,6),16); return `rgba(${r},${g},${b},0.18)` })() }}>
                               <span style={{ fontWeight: 600, color: 'var(--text)', fontSize: 13 }}>{e.prenom} {e.nom}</span>
-                              <span style={{ textAlign: 'center', fontWeight: 700, fontSize: 15, color: countColor }}>{s.paye}</span>
-                              <span style={{ textAlign: 'center', fontWeight: 700, fontSize: 15, color: countColor }}>{s.invite}</span>
-                              <span style={{ textAlign: 'center', fontWeight: 800, fontSize: 17, color: countColor }}>{total}</span>
+                              <span style={{ textAlign: 'center', fontWeight: 700, fontSize: 15, color: '#0c1524' }}>{s.paye}</span>
+                              <span style={{ textAlign: 'center', fontWeight: 700, fontSize: 15, color: '#0c1524' }}>{s.invite}</span>
+                              <span style={{ textAlign: 'center', fontWeight: 800, fontSize: 17, color: '#0c1524' }}>{total}</span>
                             </div>
                           )
                         })}
@@ -605,8 +605,9 @@ export default function Home() {
                                   const fmtDate = m.date ? new Date(m.date + 'T12:00:00').toLocaleDateString('fr-FR') : ''
                                   const isPaye = m.type === 'paye'
                                   const impColor = m.count_color || '#a8e6a3'
+                                  const impColorLight = (() => { const h = impColor.replace('#',''); const r=parseInt(h.slice(0,2),16),g=parseInt(h.slice(2,4),16),b=parseInt(h.slice(4,6),16); return `rgba(${r},${g},${b},0.30)` })()
                                   return (
-                                    <div key={m.id} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 6px 4px 10px', borderRadius: 8, fontSize: 12, background: impColor, border: `1px solid rgba(0,0,0,.10)`, color: '#1a2a1a' }}>
+                                    <div key={m.id} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 6px 4px 10px', borderRadius: 8, fontSize: 12, background: impColorLight, border: `1px solid rgba(0,0,0,.08)`, color: '#1a2a1a' }}>
                                       <span style={{ fontSize: 11, opacity: 0.65, fontWeight: 500 }}>{fmtDate}</span>
                                       <span style={{ fontWeight: 700, fontSize: 11, padding: '1px 8px', borderRadius: 10, background: 'rgba(0,0,0,.12)', color: '#111' }}>{isPaye ? 'Payé' : 'Invité'}</span>
                                       {m.commentaire && <span style={{ color: m.commentaire_color || '#333' }}>{m.commentaire}</span>}
@@ -625,7 +626,7 @@ export default function Home() {
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center', padding: '12px 0', marginTop: 4 }}>
                     <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '.06em', marginRight: 4 }}>Légende</span>
                     {IMPUTATIONS.map(imp => (
-                      <div key={imp.label} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '4px 12px', borderRadius: 20, background: imp.color, border: '1px solid rgba(0,0,0,.08)', fontSize: 12, fontWeight: 600, color: '#1a1a1a' }}>
+                      <div key={imp.label} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '4px 12px', borderRadius: 20, background: (() => { const h = imp.color.replace('#',''); const r=parseInt(h.slice(0,2),16),g=parseInt(h.slice(2,4),16),b=parseInt(h.slice(4,6),16); return `rgba(${r},${g},${b},0.30)` })(), border: '1px solid rgba(0,0,0,.06)', fontSize: 12, fontWeight: 600, color: '#1a1a1a' }}>
                         {imp.label}
                       </div>
                     ))}
