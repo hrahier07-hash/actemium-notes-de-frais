@@ -544,7 +544,7 @@ export default function Home() {
                           return nameOk && typeOk && commentOk
                         })
                         // Récupérer les salariés uniques dans l'ordre voulu
-                        const empIds = [...new Set(filtered.map(m => m.employee_id))]
+                        const seen = new Set<string>(); const empIds = filtered.map(m => m.employee_id).filter(id => { if (seen.has(id)) return false; seen.add(id); return true })
                         const sorted = empIds.sort((a, b) => {
                           const d = monthSort.dir === 'asc' ? 1 : -1
                           return getEmpName(a).localeCompare(getEmpName(b)) * d
