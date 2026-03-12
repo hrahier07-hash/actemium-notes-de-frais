@@ -280,9 +280,9 @@ export default function Home() {
       <aside className="acm-sidebar">
         <div className="acm-sidebar-logo">
           <img src={LOGO_SRC} alt="Actemium" style={{ height: 36, width: 'auto', flexShrink: 0 }} />
-          <div className="acm-sidebar-logo-text" style={{ minWidth: 0 }}>
-            <div style={{ fontWeight: 700, fontSize: 12, color: 'var(--primary)', lineHeight: 1.2, letterSpacing: '-.01em' }}>Gestion des repas</div>
-            <div style={{ fontSize: 11, color: 'var(--text3)', marginTop: 2 }}>notes de frais</div>
+          <div className="acm-sidebar-logo-text" style={{ minWidth: 0, overflow: 'hidden' }}>
+            <div style={{ fontWeight: 600, fontSize: 12.5, color: 'var(--primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Notes de frais</div>
+            <div style={{ fontSize: 11, color: 'var(--text3)', whiteSpace: 'nowrap' }}>Actemium</div>
           </div>
         </div>
         <nav className="acm-nav">
@@ -327,15 +327,15 @@ export default function Home() {
                     <span style={S.cardTitle}>Ajouter un repas</span>
                   </div>
                   <div className="acm-grid2">
-                    <div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                       <label style={S.label}>Salarié</label>
                       <SearchInput value={mForm.empSearch} onChange={v => setMForm(f => ({ ...f, empSearch: v, employeeId: '' }))} placeholder="Filtrer les salariés…" />
-                      <select style={{ ...S.input, marginTop: 6 }} value={mForm.employeeId} onChange={e => setMForm(f => ({ ...f, employeeId: e.target.value, invites: [] }))}>
+                      <select style={S.input} value={mForm.employeeId} onChange={e => setMForm(f => ({ ...f, employeeId: e.target.value, invites: [] }))}>
                         <option value="">Sélectionner…</option>
                         {filteredEmpForForm.map(e => <option key={e.id} value={e.id}>{e.prenom} {e.nom}</option>)}
                       </select>
                     </div>
-                    <div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                       <label style={S.label}>Type de repas</label>
                       <select style={S.input} value={mForm.type} onChange={e => setMForm(f => ({ ...f, type: e.target.value as 'paye' | 'invite', invites: [] }))}>
                         <option value="paye">Payé par le salarié</option>
@@ -755,7 +755,7 @@ const S = {
   pageSub: { fontSize: 13, color: 'var(--text3)', marginTop: 4, fontWeight: 400 } as React.CSSProperties,
   // ── Form ──
   label: { display: 'block', fontSize: 12, fontWeight: 500, color: 'var(--text2)', letterSpacing: '.02em', marginBottom: 6 } as React.CSSProperties,
-  input: { width: '100%', background: 'var(--bg)', border: '1px solid var(--border2)', borderRadius: 8, padding: '10px 13px', fontSize: 13.5, color: 'var(--text)', outline: 'none', transition: 'border-color .15s, box-shadow .15s', height: 40 } as React.CSSProperties,
+  input: { width: '100%', background: '#ffffff', border: '1px solid var(--border2)', borderRadius: 8, padding: '10px 13px', fontSize: 13.5, color: 'var(--text)', outline: 'none', transition: 'border-color .15s, box-shadow .15s', height: 40, boxShadow: 'none' } as React.CSSProperties,
   // ── Buttons ──
   btnPrimary: { background: 'var(--primary)', color: '#fff', border: 'none', borderRadius: 8, padding: '0 20px', fontWeight: 500, fontSize: 13.5, cursor: 'pointer', transition: 'background .15s, box-shadow .15s, transform .1s', whiteSpace: 'nowrap', height: 40, display: 'inline-flex', alignItems: 'center', gap: 6 } as React.CSSProperties,
   btnGhost: { background: 'var(--bg)', color: 'var(--text2)', border: '1px solid var(--border2)', borderRadius: 8, padding: '0 16px', fontWeight: 500, fontSize: 13, cursor: 'pointer', transition: 'all .15s', height: 36, display: 'inline-flex', alignItems: 'center' } as React.CSSProperties,
@@ -782,6 +782,6 @@ const S = {
   modalTitle: { fontWeight: 600, fontSize: 15, color: 'var(--text)', letterSpacing: '-.01em' } as React.CSSProperties,
   closeBtn: { background: 'var(--bg3)', border: '1px solid var(--border)', color: 'var(--text2)', cursor: 'pointer', fontSize: 13, padding: '5px 9px', borderRadius: 6, lineHeight: 1, fontWeight: 500, transition: 'all .15s' } as React.CSSProperties,
   // ── Color picker ──
-  colorTrigger: { display: 'flex', alignItems: 'center', gap: 8, background: 'var(--bg)', border: '1px solid var(--border2)', borderRadius: 8, padding: '8px 12px', cursor: 'pointer', color: 'var(--text)', width: '100%', height: 40, transition: 'border-color .15s' } as React.CSSProperties,
+  colorTrigger: { display: 'flex', alignItems: 'center', gap: 8, background: '#ffffff', border: '1px solid var(--border2)', borderRadius: 8, padding: '8px 12px', cursor: 'pointer', color: 'var(--text)', width: '100%', height: 40, transition: 'border-color .15s', boxShadow: 'none' } as React.CSSProperties,
   colorPanel: { position: 'absolute', top: '100%', left: 0, zIndex: 200, marginTop: 6, background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 12, padding: 14, boxShadow: '0 8px 32px rgba(0,0,0,.10)', width: 230, minWidth: 200 } as React.CSSProperties,
 }
