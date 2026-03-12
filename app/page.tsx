@@ -490,7 +490,7 @@ export default function Home() {
                         })}
                     </div>
 
-                    {/* ── Tableau de détail ── */}
+                    {/* ── Tableau de détail groupé par salarié ── */}
                     <div style={S.card}>
                       <div style={{ ...S.cardHeader, marginBottom: 12 }}>
                         <span style={S.cardTitle}>Détail des repas</span>
@@ -504,7 +504,7 @@ export default function Home() {
                           }).length} repas
                         </span>
                       </div>
-                      {/* filtres détail */}
+                      {/* filtres */}
                       <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 14, alignItems: 'center' }}>
                         <div style={{ flex: '1 1 180px', maxWidth: 260 }}>
                           <SearchInput value={monthSearch} onChange={setMonthSearch} placeholder="Filtrer par salarié…" />
@@ -524,40 +524,56 @@ export default function Home() {
                           </button>
                         )}
                       </div>
-                      <div style={S.tableWrap} className="acm-tbl">
-                        <div style={{ ...S.tableHead, cursor: 'default' }}>
-                          {(['date','emp','type','comment'] as const).map(k => {
-                            const labels: Record<string, string> = { date: 'Date', emp: 'Salarié', type: 'Type', comment: 'Commentaire' }
-                            const active = monthSort.key === k
-                            return (
-                              <span key={k} onClick={() => setMonthSort(prev => ({ key: k, dir: prev.key === k && prev.dir === 'asc' ? 'desc' : 'asc' }))}
-                                style={{ cursor: 'pointer', userSelect: 'none', color: active ? 'var(--primary)' : 'var(--text3)', display: 'flex', alignItems: 'center', gap: 4 }}>
-                                {labels[k]}
-                                <span style={{ fontSize: 10, opacity: active ? 1 : 0.4 }}>{active ? (monthSort.dir === 'asc' ? '▲' : '▼') : '⇅'}</span>
-                              </span>
-                            )
-                          })}
-                          <span></span>
-                        </div>
-                        {[...monthMeals]
-                          .filter(m => {
-                            const e = empById[m.employee_id]
-                            const nameOk = !e || (e.prenom + ' ' + e.nom).toLowerCase().includes(monthSearch.toLowerCase())
-                            const typeOk = detailTypeFilter === 'all' || m.type === detailTypeFilter
-                            const commentOk = !detailCommentSearch || (m.commentaire || '').toLowerCase().includes(detailCommentSearch.toLowerCase())
-                            return nameOk && typeOk && commentOk
-                          })
-                          .sort((a, b) => {
-                            const d = monthSort.dir === 'asc' ? 1 : -1
-                            if (monthSort.key === 'date') return a.date.localeCompare(b.date) * d
-                            if (monthSort.key === 'emp') return getEmpName(a.employee_id).localeCompare(getEmpName(b.employee_id)) * d
-                            if (monthSort.key === 'type') return a.type.localeCompare(b.type) * d
-                            return (a.commentaire || '').localeCompare(b.commentaire || '') * d
-                          })
-                          .map(m => (
-                            <MealRow key={m.id} meal={m} empName={getEmpName(m.employee_id)} onEdit={() => setEditMeal(m)} onDelete={() => deleteMeal(m.id)} />
-                          ))}
+                      {/* en-tête */}
+                      <div style={{ display: 'grid', gridTemplateColumns: '200px 1fr', gap: 16, padding: '6px 0 10px', borderBottom: '2px solid var(--border)', fontSize: 11, fontWeight: 600, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '.06em' }}>
+                        <span onClick={() => setMonthSort(prev => ({ key: 'emp', dir: prev.key === 'emp' && prev.dir === 'asc' ? 'desc' : 'asc' }))}
+                          style={{ cursor: 'pointer', userSelect: 'none', display: 'flex', alignItems: 'center', gap: 4, color: monthSort.key === 'emp' ? 'var(--primary)' : 'var(--text3)' }}>
+                          Salarié
+                          <span style={{ fontSize: 10, opacity: monthSort.key === 'emp' ? 1 : 0.4 }}>{monthSort.key === 'emp' ? (monthSort.dir === 'asc' ? '▲' : '▼') : '⇅'}</span>
+                        </span>
+                        <span>Repas du mois</span>
                       </div>
+                      {/* lignes groupées */}
+                      {(() => {
+                        // Grouper les repas filtrés par salarié
+                        const filtered = monthMeals.filter(m => {
+                          const e = empById[m.employee_id]
+                          const nameOk = !e || (e.prenom + ' ' + e.nom).toLowerCase().includes(monthSearch.toLowerCase())
+                          const typeOk = detailTypeFilter === 'all' || m.type === detailTypeFilter
+                          const commentOk = !detailCommentSearch || (m.commentaire || '').toLowerCase().includes(detailCommentSearch.toLowerCase())
+                          return nameOk && typeOk && commentOk
+                        })
+                        // Récupérer les salariés uniques dans l'ordre voulu
+                        const empIds = [...new Set(filtered.map(m => m.employee_id))]
+                        const sorted = empIds.sort((a, b) => {
+                          const d = monthSort.dir === 'asc' ? 1 : -1
+                          return getEmpName(a).localeCompare(getEmpName(b)) * d
+                        })
+                        if (sorted.length === 0) return <div style={S.emptyState}>Aucun repas correspondant aux filtres.</div>
+                        return sorted.map((empId, idx) => {
+                          const empMeals = filtered.filter(m => m.employee_id === empId).sort((a, b) => a.date.localeCompare(b.date))
+                          return (
+                            <div key={empId} style={{ display: 'grid', gridTemplateColumns: '200px 1fr', gap: 16, alignItems: 'flex-start', padding: '12px 0', borderBottom: '1px solid var(--border)', background: idx % 2 === 0 ? 'transparent' : 'var(--bg2)' }}>
+                              <span style={{ fontWeight: 600, fontSize: 13, color: 'var(--text)', paddingTop: 4 }}>{getEmpName(empId)}</span>
+                              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                                {empMeals.map(m => {
+                                  const fmtDate = m.date ? new Date(m.date + 'T12:00:00').toLocaleDateString('fr-FR') : ''
+                                  const isPaye = m.type === 'paye'
+                                  return (
+                                    <div key={m.id} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 6px 4px 10px', borderRadius: 8, fontSize: 12, background: isPaye ? 'var(--secondary-light)' : 'var(--primary-light)', border: isPaye ? '1px solid #c5d96e' : '1px solid #b3cceb', color: isPaye ? '#3a4a00' : 'var(--primary)' }}>
+                                      <span style={{ fontSize: 11, opacity: 0.7, fontWeight: 500 }}>{fmtDate}</span>
+                                      <span style={{ fontWeight: 600, fontSize: 11, padding: '1px 6px', borderRadius: 10, background: isPaye ? '#c5d96e' : '#b3cceb' }}>{isPaye ? 'Payé' : 'Invité'}</span>
+                                      {m.commentaire && <span style={{ color: m.commentaire_color || 'var(--text2)' }}>{m.commentaire}</span>}
+                                      <button onClick={() => setEditMeal(m)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0 2px', opacity: 0.5, fontSize: 13, lineHeight: 1 }} title="Modifier">✎</button>
+                                      <button onClick={() => deleteMeal(m.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0 2px', opacity: 0.5, color: 'var(--red)', fontSize: 13, lineHeight: 1 }} title="Supprimer">×</button>
+                                    </div>
+                                  )
+                                })}
+                              </div>
+                            </div>
+                          )
+                        })
+                      })()}
                     </div>
                   </>
                 )}
