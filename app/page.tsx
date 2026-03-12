@@ -228,7 +228,7 @@ export default function Home() {
         </div>
       )}
 
-      <header style={S.header}>
+      <header style={S.header} className="acm-header">
         <div style={S.headerInner}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
             <div style={S.logoWrap}>
@@ -250,7 +250,7 @@ export default function Home() {
         </div>
       </header>
 
-      <main style={S.main}>
+      <main style={S.main} className="acm-main">
         {loading ? (
           <div style={{ textAlign: 'center', padding: '80px 0', color: 'var(--text3)' }}>
             <div style={{ fontSize: 28, marginBottom: 12 }}>⟳</div>
@@ -259,12 +259,12 @@ export default function Home() {
         ) : (
           <>
             {tab === 'saisie' && (
-              <div style={{ display: 'grid', gap: 20 }}>
+              <div className="acm-saisie-layout">
                 <div style={S.card}>
                   <div style={S.cardHeader}>
                     <span style={S.cardTitle}>Ajouter un repas</span>
                   </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 14, marginBottom: 16 }}>
+                  <div className="acm-grid3">
                     <div>
                       <label style={S.label}>Salarié</label>
                       <SearchInput value={mForm.empSearch} onChange={v => setMForm(f => ({ ...f, empSearch: v, employeeId: '' }))} placeholder="Filtrer les salariés…" />
@@ -286,12 +286,12 @@ export default function Home() {
                     </div>
                   </div>
 
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 16 }}>
+                  <div className="acm-grid2">
                     <div>
                       <label style={S.label}>Commentaire <span style={{ color: 'var(--text3)', fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>(laissez vide pour auto)</span></label>
                       <input style={S.input} value={mForm.commentaire} placeholder={genCommentaire(mForm.type, mForm.date)} onChange={e => setMForm(f => ({ ...f, commentaire: e.target.value }))} />
                     </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                    <div className="acm-colors">
                       <ColorPicker label="Couleur commentaire" value={mForm.commentaireColor} onChange={c => setMForm(f => ({ ...f, commentaireColor: c }))} />
                       <ColorPicker label="Couleur compteur" value={mForm.countColor} onChange={c => setMForm(f => ({ ...f, countColor: c }))} />
                     </div>
@@ -325,7 +325,7 @@ export default function Home() {
                     <span style={S.cardTitle}>Repas récents</span>
                     <span style={S.badge}>{meals.length} au total</span>
                   </div>
-                  <div style={S.tableWrap}>
+                  <div style={S.tableWrap} className="acm-tbl">
                     {meals.slice(0, 10).length === 0 ? (
                       <div style={S.emptyState}>Aucun repas enregistré.</div>
                     ) : (
@@ -393,7 +393,7 @@ export default function Home() {
                           return (e.prenom + ' ' + e.nom).toLowerCase().includes(monthSearch.toLowerCase())
                         }).length} repas</span>
                       </div>
-                      <div style={S.tableWrap}>
+                      <div style={S.tableWrap} className="acm-tbl">
                         <div style={S.tableHead}><span>Date</span><span>Salarié</span><span>Type</span><span>Commentaire</span><span></span></div>
                         {[...monthMeals]
                           .filter(m => {
@@ -417,7 +417,7 @@ export default function Home() {
                 <h1 style={S.pageTitle}>Gestion des salariés</h1>
                 <div style={S.card}>
                   <div style={S.cardTitle}>{editEmp ? 'Modifier le salarié' : 'Nouveau salarié'}</div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto', gap: 12, alignItems: 'flex-end', marginTop: 14 }}>
+                  <div className="acm-emp-form">
                     <div><label style={S.label}>Prénom</label><input style={S.input} placeholder="Prénom" value={eForm.prenom} onChange={e => setEForm(f => ({ ...f, prenom: e.target.value }))} /></div>
                     <div><label style={S.label}>Nom</label><input style={S.input} placeholder="Nom" value={eForm.nom} onChange={e => setEForm(f => ({ ...f, nom: e.target.value }))} /></div>
                     <div style={{ display: 'flex', gap: 8 }}>
@@ -488,15 +488,15 @@ function StatBox({ num, label, color, big }: { num: number; label: string; color
 }
 
 const S = {
-  header: { background: 'var(--bg)', borderBottom: '1px solid var(--border)', padding: '0 32px', position: 'sticky', top: 0, zIndex: 50, boxShadow: 'var(--shadow)' } as React.CSSProperties,
-  headerInner: { maxWidth: 980, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 64 } as React.CSSProperties,
+  header: { background: 'var(--bg)', borderBottom: '1px solid var(--border)', position: 'sticky', top: 0, zIndex: 50, boxShadow: 'var(--shadow)' } as React.CSSProperties,
+  headerInner: { maxWidth: 1280, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 64 } as React.CSSProperties,
   logoWrap: { height: 36, display: 'flex', alignItems: 'center' } as React.CSSProperties,
   logo: { height: 36, width: 'auto', display: 'block' } as React.CSSProperties,
   divider: { width: 1, height: 28, background: 'var(--border)', flexShrink: 0 } as React.CSSProperties,
   appTitle: { fontWeight: 700, fontSize: 15, color: 'var(--primary)', letterSpacing: '-.01em' } as React.CSSProperties,
   appSub: { fontSize: 11, color: 'var(--text3)', marginTop: 1 } as React.CSSProperties,
   tabBtn: { border: 'none', padding: '7px 14px', fontSize: 13, cursor: 'pointer', borderRadius: 'var(--radius-sm)', transition: 'all .15s' } as React.CSSProperties,
-  main: { maxWidth: 980, margin: '0 auto', padding: '28px 32px' } as React.CSSProperties,
+  main: { } as React.CSSProperties,
   card: { background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '22px 24px', boxShadow: 'var(--shadow)' } as React.CSSProperties,
   cardHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, gap: 12 } as React.CSSProperties,
   cardTitle: { fontWeight: 600, fontSize: 15, color: 'var(--text)' } as React.CSSProperties,
@@ -512,9 +512,9 @@ const S = {
   badge: { background: 'var(--primary-light)', color: 'var(--primary)', padding: '3px 10px', borderRadius: 20, fontSize: 12, fontWeight: 600 } as React.CSSProperties,
   badgePaye: { display: 'inline-block', padding: '2px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600, background: 'var(--secondary-light)', color: '#3a4a00', border: '1px solid #c5d96e' } as React.CSSProperties,
   badgeInvite: { display: 'inline-block', padding: '2px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600, background: 'var(--primary-light)', color: 'var(--primary)', border: '1px solid #b3cceb' } as React.CSSProperties,
-  tableWrap: { marginTop: 16 } as React.CSSProperties,
-  tableHead: { display: 'grid', gridTemplateColumns: '110px 1fr 90px 1fr 70px', gap: 12, padding: '6px 0 10px', borderBottom: '1px solid var(--border)', fontSize: 11, fontWeight: 600, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '.05em' } as React.CSSProperties,
-  tableRow: { display: 'grid', gridTemplateColumns: '110px 1fr 90px 1fr 70px', gap: 12, alignItems: 'center', padding: '11px 0', borderBottom: '1px solid var(--border)' } as React.CSSProperties,
+  tableWrap: { } as React.CSSProperties,
+  tableHead: { display: 'grid', gridTemplateColumns: 'clamp(90px,10%,130px) 1fr clamp(70px,8%,100px) 1fr clamp(60px,7%,80px)', gap: 12, padding: '6px 0 10px', borderBottom: '1px solid var(--border)', fontSize: 11, fontWeight: 600, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '.05em' } as React.CSSProperties,
+  tableRow: { display: 'grid', gridTemplateColumns: 'clamp(90px,10%,130px) 1fr clamp(70px,8%,100px) 1fr clamp(60px,7%,80px)', gap: 12, alignItems: 'center', padding: '11px 0', borderBottom: '1px solid var(--border)' } as React.CSSProperties,
   summaryCard: { background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '18px 20px', boxShadow: 'var(--shadow)', borderLeft: '3px solid var(--secondary)' } as React.CSSProperties,
   emptyState: { textAlign: 'center', padding: '32px 0', color: 'var(--text3)', fontSize: 13 } as React.CSSProperties,
   overlay: { position: 'fixed', inset: 0, background: 'rgba(15,23,42,.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, backdropFilter: 'blur(2px)' } as React.CSSProperties,
