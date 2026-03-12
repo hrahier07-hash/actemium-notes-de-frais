@@ -469,7 +469,7 @@ export default function Home() {
                 {/* ── En-tête navigation mois ── */}
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
                   <div>
-                    <div><h1 style={S.pageTitle}>Vue mensuelle</h1><p style={S.pageSub}>Résumé et détail des repas par salarié</p></div>
+                    <div><h1 style={S.pageTitle}>Vue mensuelle</h1></div>
                     <p style={{ fontSize: 13, color: 'var(--text2)' }}>Résumé et détail des repas par salarié</p>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
