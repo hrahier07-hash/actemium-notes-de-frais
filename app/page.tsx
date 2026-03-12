@@ -143,7 +143,7 @@ export default function Home() {
   async function addMeal() {
     if (!mForm.employeeId || !mForm.date) return
     const emp = empById[mForm.employeeId]
-    const inserts: Partial<Meal>[] = []
+    const inserts: (Partial<Meal> & { target_month?: string })[] = []
     if (mForm.type === 'paye') {
       const tm = mForm.targetMonth + '-01'; inserts.push({ employee_id: mForm.employeeId, date: mForm.date, type: 'paye', invited_by: null, commentaire: mForm.commentaire || genCommentaire('paye', mForm.date), commentaire_color: mForm.commentaireColor, count_color: mForm.countColor, target_month: tm })
       for (const invId of mForm.invites) {
