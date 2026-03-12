@@ -354,22 +354,20 @@ export default function Home() {
                     </div>
                   </div>
 
-                  <div className="acm-grid2">
+                  <div className="acm-grid2" style={{ marginBottom: 16 }}>
                     <div>
                       <label style={S.label}>Commentaire <span style={{ color: 'var(--text3)', fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>(laissez vide pour auto)</span></label>
                       <input style={S.input} value={mForm.commentaire} placeholder={genCommentaire(mForm.type, mForm.date)} onChange={e => setMForm(f => ({ ...f, commentaire: e.target.value }))} />
                     </div>
-                    <div className="acm-colors" style={{ alignItems: 'flex-end' }}>
-                      <ColorPicker label="Couleur commentaire" value={mForm.commentaireColor} onChange={c => setMForm(f => ({ ...f, commentaireColor: c }))} />
-                      <div>
-                        <label style={S.label}>Imputation</label>
-                        <div style={{ position: 'relative' }}>
-                          <div style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', width: 14, height: 14, borderRadius: 4, background: mForm.countColor, border: '1px solid rgba(0,0,0,.12)', pointerEvents: 'none', zIndex: 1 }} />
-                          <select style={{ ...S.input, paddingLeft: 32 }} value={mForm.countColor} onChange={e => setMForm(f => ({ ...f, countColor: e.target.value }))}>
-                            {IMPUTATIONS.map(imp => <option key={imp.label} value={imp.color}>{imp.label}</option>)}
-                          </select>
-                        </div>
-                      </div>
+                    <ColorPicker label="Couleur commentaire" value={mForm.commentaireColor} onChange={c => setMForm(f => ({ ...f, commentaireColor: c }))} />
+                  </div>
+                  <div style={{ marginBottom: 16 }}>
+                    <label style={S.label}>Imputation</label>
+                    <div style={{ position: 'relative' }}>
+                      <div style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', width: 14, height: 14, borderRadius: 4, background: mForm.countColor, border: '1px solid rgba(0,0,0,.12)', pointerEvents: 'none', zIndex: 1 }} />
+                      <select style={{ ...S.input, paddingLeft: 32 }} value={mForm.countColor} onChange={e => setMForm(f => ({ ...f, countColor: e.target.value }))}>
+                        {IMPUTATIONS.map(imp => <option key={imp.label} value={imp.color}>{imp.label}</option>)}
+                      </select>
                     </div>
                   </div>
 
