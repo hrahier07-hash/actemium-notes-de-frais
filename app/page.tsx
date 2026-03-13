@@ -279,11 +279,8 @@ export default function Home() {
       {/* ── Sidebar ── */}
       <aside className="acm-sidebar">
         <div className="acm-sidebar-logo">
-          <img src={LOGO_SRC} alt="Actemium" style={{ height: 36, width: 'auto', flexShrink: 0 }} />
-          <div className="acm-sidebar-logo-text" style={{ minWidth: 0, overflow: 'hidden' }}>
-            <div style={{ fontWeight: 600, fontSize: 12.5, color: 'var(--primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Notes de frais</div>
-            <div style={{ fontSize: 11, color: 'var(--text3)', whiteSpace: 'nowrap' }}>Actemium</div>
-          </div>
+          <img src={LOGO_SRC} alt="Actemium" style={{ height: 32, width: 'auto' }} />
+          <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--primary)', lineHeight: 1.3 }}>Notes de frais</div>
         </div>
         <nav className="acm-nav">
           {([
