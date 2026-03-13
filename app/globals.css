@@ -89,11 +89,12 @@ select::-ms-expand { display: none !important; }
 .acm-sidebar-logo {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: center;
   gap: 8px;
-  padding: 18px 8px 16px;
+  padding: 20px 8px 16px;
   border-bottom: 1px solid var(--border);
   margin-bottom: 8px;
+  text-align: center;
 }
 
 .acm-nav { flex: 1; display: flex; flex-direction: column; gap: 2px; padding: 4px 0; }
