@@ -107,10 +107,7 @@ export default function Home() {
   const [toast, setToast] = useState<{ msg: string; type: 'ok' | 'err' }>({ msg: '', type: 'ok' })
   const [monthSearch, setMonthSearch] = useState('')
   const [empSearch, setEmpSearch] = useState('')
-  const [monthSort, setMonthSort] = useState<{ key: 'date' | 'emp' | 'type' | 'comment'; dir: 'asc' | 'desc' }>({ key: 'date', dir: 'asc' })
   const [summarySort, setSummarySort] = useState<{ key: 'nom' | 'paye' | 'invite' | 'total'; dir: 'asc' | 'desc' }>({ key: 'nom', dir: 'asc' })
-  const [detailTypeFilter, setDetailTypeFilter] = useState<'all' | 'paye' | 'invite'>('all')
-  const [detailCommentSearch, setDetailCommentSearch] = useState('')
   const [confirmDelEmp, setConfirmDelEmp] = useState<Employee | null>(null)
 
   function showToast(msg: string, type: 'ok' | 'err' = 'ok') {
@@ -506,179 +503,100 @@ export default function Home() {
 
                 {monthMeals.length === 0 ? (
                   <div style={S.card}><div style={S.emptyState}>Aucun repas pour {MONTHS[currentMonth]} {currentYear}.</div></div>
-                ) : (
-                  <>
-                    {/* ── Récapitulatif tableau ── */}
+                ) : (() => {
+                  const impColorLight = (hex: string) => { const h = hex.replace('#',''); const r=parseInt(h.slice(0,2),16),g=parseInt(h.slice(2,4),16),b=parseInt(h.slice(4,6),16); return `rgba(${r},${g},${b},0.28)` }
+                  const visibleEmps = [...filteredEmpForMonth]
+                    .filter(e => { const s = summary[e.id] || { paye:0,invite:0 }; return (s.paye+s.invite) > 0 })
+                    .sort((a,b) => {
+                      const sa = summary[a.id] || { paye:0,invite:0 }
+                      const sb = summary[b.id] || { paye:0,invite:0 }
+                      const d = summarySort.dir === 'asc' ? 1 : -1
+                      if (summarySort.key === 'nom') return (a.prenom+' '+a.nom).localeCompare(b.prenom+' '+b.nom)*d
+                      if (summarySort.key === 'paye') return (sa.paye-sb.paye)*d
+                      if (summarySort.key === 'invite') return (sa.invite-sb.invite)*d
+                      return ((sa.paye+sa.invite)-(sb.paye+sb.invite))*d
+                    })
+                  const totalPaye = visibleEmps.reduce((acc,e) => acc+(summary[e.id]?.paye||0),0)
+                  const totalInvite = visibleEmps.reduce((acc,e) => acc+(summary[e.id]?.invite||0),0)
+                  return (
                     <div style={S.card}>
-                      <div style={{ ...S.cardHeader, marginBottom: 12 }}>
-                        <span style={S.cardTitle}>Récapitulatif par salarié</span>
-                        <div style={{ maxWidth: 260 }}>
+                      {/* ── Header ── */}
+                      <div style={{ ...S.cardHeader, marginBottom: 16 }}>
+                        <div>
+                          <span style={S.cardTitle}>Repas de {MONTHS[currentMonth]} {currentYear}</span>
+                          <span style={{ marginLeft: 10, fontSize: 12, color: 'var(--text3)', fontWeight: 400 }}>{monthMeals.length} repas · {visibleEmps.length} salarié{visibleEmps.length !== 1 ? 's' : ''}</span>
+                        </div>
+                        <div style={{ maxWidth: 240 }}>
                           <SearchInput value={monthSearch} onChange={setMonthSearch} placeholder="Filtrer par nom…" />
                         </div>
                       </div>
-                      {/* en-têtes cliquables */}
-                      <div style={S.summaryHead}>
-                        {([
-                          { k: 'nom', label: 'Nom / Prénom' },
-                          { k: 'paye', label: 'Payé' },
-                          { k: 'invite', label: 'Invité' },
-                          { k: 'total', label: 'Total' },
-                        ] as const).map(({ k, label }) => {
+
+                      {/* ── En-têtes colonnes ── */}
+                      <div style={{ display: 'grid', gridTemplateColumns: '180px 1fr 72px 72px 72px', gap: 12, padding: '8px 12px 10px', borderBottom: '1.5px solid var(--border)', fontSize: 11, fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '.06em', color: 'var(--primary)' }}>
+                        {(['nom','_','paye','invite','total'] as const).map(k => {
+                          if (k === '_') return <span key="_" style={{ color: 'var(--text3)' }}>Repas du mois</span>
+                          const label = k === 'nom' ? 'Nom / Prénom' : k === 'paye' ? 'Payé' : k === 'invite' ? 'Invité' : 'Total'
                           const active = summarySort.key === k
+                          const centered = k !== 'nom'
                           return (
                             <span key={k}
-                              onClick={() => setSummarySort(prev => ({ key: k, dir: prev.key === k && prev.dir === 'asc' ? 'desc' : 'asc' }))}
-                              style={{ cursor: 'pointer', userSelect: 'none', display: 'flex', alignItems: 'center', gap: 4,
-                                color: 'var(--primary)',
-                                justifyContent: k === 'nom' ? 'flex-start' : 'center' }}>
+                              onClick={k !== '_' ? () => setSummarySort(p => ({ key: k as any, dir: p.key === k && p.dir === 'asc' ? 'desc' : 'asc' })) : undefined}
+                              style={{ cursor: k !== '_' ? 'pointer' : 'default', userSelect: 'none', display: 'flex', alignItems: 'center', gap: 3, justifyContent: centered ? 'center' : 'flex-start' }}>
                               {label}
-                              <span style={{ fontSize: 10, opacity: active ? 1 : 0.6 }}>
-                                {active ? (summarySort.dir === 'asc' ? '▲' : '▼') : '⇅'}
-                              </span>
+                              {k !== '_' && <span style={{ fontSize: 9, opacity: active ? 1 : 0.5 }}>{active ? (summarySort.dir === 'asc' ? '▲' : '▼') : '⇅'}</span>}
                             </span>
                           )
                         })}
                       </div>
-                      {[...filteredEmpForMonth]
-                        .filter(e => { const s = summary[e.id] || { paye: 0, invite: 0 }; return (s.paye + s.invite) > 0 })
-                        .sort((a, b) => {
-                          const sa = summary[a.id] || { paye: 0, invite: 0 }
-                          const sb = summary[b.id] || { paye: 0, invite: 0 }
-                          const d = summarySort.dir === 'asc' ? 1 : -1
-                          if (summarySort.key === 'nom') return (a.prenom + ' ' + a.nom).localeCompare(b.prenom + ' ' + b.nom) * d
-                          if (summarySort.key === 'paye') return (sa.paye - sb.paye) * d
-                          if (summarySort.key === 'invite') return (sa.invite - sb.invite) * d
-                          return ((sa.paye + sa.invite) - (sb.paye + sb.invite)) * d
-                        })
-                        .map((e, i, arr) => {
-                          const s = summary[e.id] || { paye: 0, invite: 0 }
-                          const total = s.paye + s.invite
-                          const countColor = monthMeals.find(m => m.employee_id === e.id)?.count_color || 'var(--primary)'
-                          return (
-                            <div key={e.id} style={S.summaryRow} className="acm-summary-row">
-                              <span style={{ fontWeight: 600, color: 'var(--text)', fontSize: 13 }}>{e.prenom} {e.nom}</span>
-                              <span style={{ textAlign: 'center', fontWeight: 700, fontSize: 15, color: '#0c1524' }}>{s.paye}</span>
-                              <span style={{ textAlign: 'center', fontWeight: 700, fontSize: 15, color: '#0c1524' }}>{s.invite}</span>
-                              <span style={{ textAlign: 'center', fontWeight: 800, fontSize: 17, color: '#0c1524' }}>{total}</span>
-                            </div>
-                          )
-                        })}
-                        {/* ── Ligne totaux ── */}
-                        {(() => {
-                          const visibleEmps = [...filteredEmpForMonth].filter(e => { const s = summary[e.id] || { paye: 0, invite: 0 }; return (s.paye + s.invite) > 0 })
-                          const totalPaye = visibleEmps.reduce((acc, e) => acc + (summary[e.id]?.paye || 0), 0)
-                          const totalInvite = visibleEmps.reduce((acc, e) => acc + (summary[e.id]?.invite || 0), 0)
-                          const totalAll = totalPaye + totalInvite
-                          if (visibleEmps.length === 0) return null
-                          return (
-                            <div style={{ ...S.summaryRow, borderTop: '2px solid var(--primary)', borderBottom: 'none', background: 'var(--primary-light)', marginTop: 2 }}>
-                              <span style={{ fontWeight: 700, color: 'var(--primary)', fontSize: 13, textTransform: 'uppercase', letterSpacing: '.04em' }}>Total</span>
-                              <span style={{ textAlign: 'center', fontWeight: 800, fontSize: 16, color: 'var(--primary)' }}>{totalPaye}</span>
-                              <span style={{ textAlign: 'center', fontWeight: 800, fontSize: 16, color: 'var(--primary)' }}>{totalInvite}</span>
-                              <span style={{ textAlign: 'center', fontWeight: 900, fontSize: 18, color: 'var(--primary)' }}>{totalAll}</span>
-                            </div>
-                          )
-                        })()}
-                    </div>
 
-                    {/* ── Tableau de détail groupé par salarié ── */}
-                    <div style={S.card}>
-                      <div style={{ ...S.cardHeader, marginBottom: 12 }}>
-                        <span style={S.cardTitle}>Détail des repas</span>
-                        <span style={S.badge}>
-                          {monthMeals.filter(m => {
-                            const e = empById[m.employee_id]
-                            const nameOk = !e || (e.prenom + ' ' + e.nom).toLowerCase().includes(monthSearch.toLowerCase())
-                            const typeOk = detailTypeFilter === 'all' || m.type === detailTypeFilter
-                            const commentOk = !detailCommentSearch || (m.commentaire || '').toLowerCase().includes(detailCommentSearch.toLowerCase())
-                            return nameOk && typeOk && commentOk
-                          }).length} repas
-                        </span>
-                      </div>
-                      {/* filtres */}
-                      <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 14, alignItems: 'center' }}>
-                        <div style={{ flex: '1 1 180px', maxWidth: 260 }}>
-                          <SearchInput value={monthSearch} onChange={setMonthSearch} placeholder="Filtrer par salarié…" inputStyle={{ borderColor: 'var(--border2)', color: 'var(--text)' }} />
-                        </div>
-                        <div style={{ flex: '1 1 160px', maxWidth: 220 }}>
-                          <SearchInput value={detailCommentSearch} onChange={setDetailCommentSearch} placeholder="Filtrer par commentaire…" inputStyle={{ borderColor: 'var(--border2)', color: 'var(--text)' }} />
-                        </div>
-                        <select style={{ ...S.input, width: 'auto', padding: '7px 12px', fontSize: 13, borderColor: 'var(--border2)', color: 'var(--text)' }}
-                          value={detailTypeFilter} onChange={e => setDetailTypeFilter(e.target.value as typeof detailTypeFilter)}>
-                          <option value="all">Tous les types</option>
-                          <option value="paye">Payé uniquement</option>
-                          <option value="invite">Invité uniquement</option>
-                        </select>
-                        {(monthSearch || detailCommentSearch || detailTypeFilter !== 'all') && (
-                          <button style={S.btnGhost} onClick={() => { setMonthSearch(''); setDetailCommentSearch(''); setDetailTypeFilter('all') }}>
-                            ✕ Réinitialiser
-                          </button>
-                        )}
-                      </div>
-                      {/* en-tête */}
-                      <div style={{ display: 'grid', gridTemplateColumns: '200px 1fr', gap: 16, padding: '6px 0 10px', borderBottom: '2px solid var(--border)', fontSize: 11, fontWeight: 600, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '.06em' }}>
-                        <span onClick={() => setMonthSort(prev => ({ key: 'emp', dir: prev.key === 'emp' && prev.dir === 'asc' ? 'desc' : 'asc' }))}
-                          style={{ cursor: 'pointer', userSelect: 'none', display: 'flex', alignItems: 'center', gap: 4, color: monthSort.key === 'emp' ? 'var(--primary)' : 'var(--text3)' }}>
-                          Salarié
-                          <span style={{ fontSize: 10, opacity: monthSort.key === 'emp' ? 1 : 0.4 }}>{monthSort.key === 'emp' ? (monthSort.dir === 'asc' ? '▲' : '▼') : '⇅'}</span>
-                        </span>
-                        <span>Repas du mois</span>
-                      </div>
-                      {/* lignes groupées */}
-                      {(() => {
-                        // Grouper les repas filtrés par salarié
-                        const filtered = monthMeals.filter(m => {
-                          const e = empById[m.employee_id]
-                          const nameOk = !e || (e.prenom + ' ' + e.nom).toLowerCase().includes(monthSearch.toLowerCase())
-                          const typeOk = detailTypeFilter === 'all' || m.type === detailTypeFilter
-                          const commentOk = !detailCommentSearch || (m.commentaire || '').toLowerCase().includes(detailCommentSearch.toLowerCase())
-                          return nameOk && typeOk && commentOk
-                        })
-                        // Récupérer les salariés uniques dans l'ordre voulu
-                        const seen = new Set<string>(); const empIds = filtered.map(m => m.employee_id).filter(id => { if (seen.has(id)) return false; seen.add(id); return true })
-                        const sorted = empIds.sort((a, b) => {
-                          const d = monthSort.dir === 'asc' ? 1 : -1
-                          return getEmpName(a).localeCompare(getEmpName(b)) * d
-                        })
-                        if (sorted.length === 0) return <div style={S.emptyState}>Aucun repas correspondant aux filtres.</div>
-                        return sorted.map((empId, idx) => {
-                          const empMeals = filtered.filter(m => m.employee_id === empId).sort((a, b) => a.date.localeCompare(b.date))
-                          return (
-                            <div key={empId} style={{ display: 'grid', gridTemplateColumns: '200px 1fr', gap: 16, alignItems: 'flex-start', padding: '12px 0', borderBottom: '1px solid var(--border)', background: idx % 2 === 0 ? 'transparent' : 'var(--bg2)' }}>
-                              <span style={{ fontWeight: 600, fontSize: 13, color: 'var(--text)', paddingTop: 4 }}>{getEmpName(empId)}</span>
-                              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                                {empMeals.map(m => {
-                                  const fmtDate = m.date ? new Date(m.date + 'T12:00:00').toLocaleDateString('fr-FR') : ''
-                                  const isPaye = m.type === 'paye'
-                                  const impColor = m.count_color || '#a8e6a3'
-                                  const impColorLight = (() => { const h = impColor.replace('#',''); const r=parseInt(h.slice(0,2),16),g=parseInt(h.slice(2,4),16),b=parseInt(h.slice(4,6),16); return `rgba(${r},${g},${b},0.30)` })()
-                                  return (
-                                    <div key={m.id} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 6px 4px 10px', borderRadius: 8, fontSize: 12, background: impColorLight, border: `1px solid rgba(0,0,0,.08)`, color: '#1a2a1a' }}>
-                                      <span style={{ fontSize: 11, opacity: 0.65, fontWeight: 500 }}>{fmtDate}</span>
-                                      <span style={{ fontWeight: 700, fontSize: 11, padding: '1px 8px', borderRadius: 10, background: 'rgba(0,0,0,.12)', color: '#111' }}>{isPaye ? 'Payé' : 'Invité'}</span>
-                                      {m.commentaire && <span style={{ color: m.commentaire_color || '#333' }}>{m.commentaire}</span>}
-                                      <button onClick={() => setEditMeal(m)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0 2px', opacity: 0.5, fontSize: 13, lineHeight: 1 }} title="Modifier">✎</button>
-                                      <button onClick={() => deleteMeal(m.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0 2px', opacity: 0.5, color: 'var(--red)', fontSize: 13, lineHeight: 1 }} title="Supprimer">×</button>
-                                    </div>
-                                  )
-                                })}
-                              </div>
+                      {/* ── Lignes ── */}
+                      {visibleEmps.map((e) => {
+                        const s = summary[e.id] || { paye:0,invite:0 }
+                        const empMeals = monthMeals
+                          .filter(m => m.employee_id === e.id)
+                          .sort((a,b) => a.date.localeCompare(b.date))
+                        return (
+                          <div key={e.id} style={{ display: 'grid', gridTemplateColumns: '180px 1fr 72px 72px 72px', gap: 12, alignItems: 'center', padding: '14px 12px', borderBottom: '1px solid var(--border)', transition: 'background .15s' }}
+                            className="acm-summary-row">
+                            {/* Nom */}
+                            <span style={{ fontWeight: 600, fontSize: 13.5, color: 'var(--text)' }}>{e.prenom} {e.nom}</span>
+                            {/* Chips repas */}
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
+                              {empMeals.map(m => {
+                                const fmtDate = m.date ? new Date(m.date+'T12:00:00').toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'}) : ''
+                                const bg = impColorLight(m.count_color || '#a8e6a3')
+                                return (
+                                  <div key={m.id} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '4px 8px 4px 9px', borderRadius: 7, fontSize: 12, background: bg, border: '1px solid rgba(0,0,0,.07)', color: '#1a1a1a' }}>
+                                    <span style={{ fontSize: 11, color: 'var(--text3)', fontWeight: 500, letterSpacing: '.01em' }}>{fmtDate}</span>
+                                    <span style={{ fontWeight: 600, fontSize: 11, padding: '1px 7px', borderRadius: 9, background: m.type === 'paye' ? 'rgba(22,101,52,.12)' : 'rgba(0,51,107,.12)', color: m.type === 'paye' ? '#166534' : 'var(--primary)' }}>{m.type === 'paye' ? 'Payé' : 'Invité'}</span>
+                                    {m.commentaire && <span style={{ fontSize: 11.5, color: m.commentaire_color || 'var(--text2)', maxWidth: 140, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.commentaire}</span>}
+                                    <button onClick={() => setEditMeal(m)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0 1px', opacity: 0.4, fontSize: 12, lineHeight: 1, transition: 'opacity .1s' }} onMouseEnter={ev => ev.currentTarget.style.opacity='1'} onMouseLeave={ev => ev.currentTarget.style.opacity='.4'} title="Modifier">✎</button>
+                                    <button onClick={() => deleteMeal(m.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0 1px', opacity: 0.35, color: 'var(--red)', fontSize: 12, lineHeight: 1, transition: 'opacity .1s' }} onMouseEnter={ev => ev.currentTarget.style.opacity='1'} onMouseLeave={ev => ev.currentTarget.style.opacity='.35'} title="Supprimer">×</button>
+                                  </div>
+                                )
+                              })}
                             </div>
-                          )
-                        })
-                      })()}
+                            {/* Compteurs */}
+                            <span style={{ textAlign: 'center', fontWeight: 700, fontSize: 15, color: '#0c1524' }}>{s.paye}</span>
+                            <span style={{ textAlign: 'center', fontWeight: 700, fontSize: 15, color: '#0c1524' }}>{s.invite}</span>
+                            <span style={{ textAlign: 'center', fontWeight: 800, fontSize: 17, color: '#0c1524' }}>{s.paye+s.invite}</span>
+                          </div>
+                        )
+                      })}
+
+                      {/* ── Ligne totaux ── */}
+                      {visibleEmps.length > 0 && (
+                        <div style={{ display: 'grid', gridTemplateColumns: '180px 1fr 72px 72px 72px', gap: 12, alignItems: 'center', padding: '12px 12px', borderTop: '2px solid var(--primary)', background: 'var(--primary-light)', borderRadius: '0 0 12px 12px' }}>
+                          <span style={{ fontWeight: 700, color: 'var(--primary)', fontSize: 12, textTransform: 'uppercase', letterSpacing: '.05em' }}>Total</span>
+                          <span />
+                          <span style={{ textAlign: 'center', fontWeight: 800, fontSize: 16, color: 'var(--primary)' }}>{totalPaye}</span>
+                          <span style={{ textAlign: 'center', fontWeight: 800, fontSize: 16, color: 'var(--primary)' }}>{totalInvite}</span>
+                          <span style={{ textAlign: 'center', fontWeight: 900, fontSize: 18, color: 'var(--primary)' }}>{totalPaye+totalInvite}</span>
+                        </div>
+                      )}
                     </div>
-                  {/* ── Légende imputations ── */}
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center', padding: '12px 0', marginTop: 4 }}>
-                    <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '.06em', marginRight: 4 }}>Légende</span>
-                    {IMPUTATIONS.map(imp => (
-                      <div key={imp.label} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '4px 12px', borderRadius: 20, background: (() => { const h = imp.color.replace('#',''); const r=parseInt(h.slice(0,2),16),g=parseInt(h.slice(2,4),16),b=parseInt(h.slice(4,6),16); return `rgba(${r},${g},${b},0.30)` })(), border: '1px solid rgba(0,0,0,.06)', fontSize: 12, fontWeight: 600, color: '#1a1a1a' }}>
-                        {imp.label}
-                      </div>
-                    ))}
-                  </div>
-                  </>
-                )}
+                  )
+                })()}
               </div>
             )}
 
