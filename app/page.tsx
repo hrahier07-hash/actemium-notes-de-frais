@@ -282,7 +282,7 @@ export default function Home() {
       <aside className="acm-sidebar">
         <div className="acm-sidebar-logo">
           <img src={LOGO_SRC} alt="Actemium" style={{ height: 32, width: 'auto' }} />
-          <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--primary)', lineHeight: 1.3 }}>Notes de frais</div>
+          <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--primary)', lineHeight: 1.3, textAlign: 'center' }}>Notes de frais</div>
         </div>
         <nav className="acm-nav">
           {([
@@ -328,11 +328,33 @@ export default function Home() {
                   <div className="acm-grid2">
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                       <label style={S.label}>Salarié</label>
-                      <SearchInput value={mForm.empSearch} onChange={v => setMForm(f => ({ ...f, empSearch: v, employeeId: '' }))} placeholder="Filtrer les salariés…" />
-                      <select style={S.input} value={mForm.employeeId} onChange={e => setMForm(f => ({ ...f, employeeId: e.target.value, invites: [] }))}>
-                        <option value="">Sélectionner…</option>
-                        {filteredEmpForForm.map(e => <option key={e.id} value={e.id}>{e.prenom} {e.nom}</option>)}
-                      </select>
+                      <div style={{ position: 'relative' }}>
+                        <span style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--primary)', fontSize: 14, pointerEvents: 'none', fontWeight: 600, zIndex: 1 }}>⌕</span>
+                        <input
+                          style={{ ...S.input, paddingLeft: 30 }}
+                          placeholder="Rechercher un salarié…"
+                          value={mForm.empSearch}
+                          onChange={e => {
+                            const v = e.target.value
+                            setMForm(f => ({ ...f, empSearch: v, employeeId: '' }))
+                          }}
+                          onFocus={() => setMForm(f => ({ ...f, employeeId: '' }))}
+                        />
+                        {mForm.empSearch && filteredEmpForForm.length > 0 && !mForm.employeeId && (
+                          <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 50, background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 8, boxShadow: '0 8px 24px rgba(0,0,0,.10)', marginTop: 4, overflow: 'hidden', maxHeight: 200, overflowY: 'auto' }}>
+                            {filteredEmpForForm.map(e => (
+                              <button key={e.id} type="button"
+                                onMouseDown={() => setMForm(f => ({ ...f, employeeId: e.id, empSearch: e.prenom + ' ' + e.nom, invites: [] }))}
+                                style={{ display: 'block', width: '100%', textAlign: 'left', padding: '9px 14px', fontSize: 13.5, background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text)', transition: 'background .1s' }}
+                                onMouseEnter={ev => (ev.currentTarget.style.background = 'var(--bg2)')}
+                                onMouseLeave={ev => (ev.currentTarget.style.background = 'none')}
+                              >
+                                {e.prenom} {e.nom}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                       <label style={S.label}>Type de repas</label>
