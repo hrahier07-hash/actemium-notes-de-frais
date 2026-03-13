@@ -32,7 +32,9 @@ function ColorPicker({ value, onChange, label }: { value: string; onChange: (c: 
       <button type="button" onClick={() => setOpen(o => !o)} style={S.colorTrigger}>
         <span style={{ width: 18, height: 18, borderRadius: 4, background: value, border: '1px solid var(--border2)', flexShrink: 0, display: 'inline-block' }} />
         <span style={{ fontSize: 12, color: 'var(--text2)', fontFamily: 'monospace' }}>{value}</span>
-        <span style={{ marginLeft: 'auto', color: 'var(--text3)', fontSize: 10 }}>▼</span>
+        <svg style={{ marginLeft: 'auto', flexShrink: 0 }} width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M6 8L1 3h10z" fill="#6b7280"/>
+        </svg>
       </button>
       {open && (
         <div style={S.colorPanel} onClick={e => e.stopPropagation()}>
