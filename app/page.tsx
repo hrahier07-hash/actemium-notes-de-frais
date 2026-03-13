@@ -533,17 +533,20 @@ export default function Home() {
 
                       {/* ── En-têtes colonnes ── */}
                       <div style={{ display: 'grid', gridTemplateColumns: '180px 1fr 72px 72px 72px', gap: 12, padding: '8px 12px 10px', borderBottom: '1.5px solid var(--border)', fontSize: 11, fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '.06em', color: 'var(--primary)' }}>
-                        {(['nom','_','paye','invite','total'] as const).map(k => {
-                          if (k === '_') return <span key="_" style={{ color: 'var(--text3)' }}>Repas du mois</span>
-                          const label = k === 'nom' ? 'Nom / Prénom' : k === 'paye' ? 'Payé' : k === 'invite' ? 'Invité' : 'Total'
-                          const active = summarySort.key === k
-                          const centered = k !== 'nom'
+                        {([
+                          { k: 'nom', label: 'Nom / Prénom', sortable: true },
+                          { k: 'repas', label: 'Repas du mois', sortable: false },
+                          { k: 'paye', label: 'Payé', sortable: true },
+                          { k: 'invite', label: 'Invité', sortable: true },
+                          { k: 'total', label: 'Total', sortable: true },
+                        ] as { k: string; label: string; sortable: boolean }[]).map(({ k, label, sortable }) => {
+                          const active = sortable && summarySort.key === k
                           return (
                             <span key={k}
-                              onClick={k !== '_' ? () => setSummarySort(p => ({ key: k as any, dir: p.key === k && p.dir === 'asc' ? 'desc' : 'asc' })) : undefined}
-                              style={{ cursor: k !== '_' ? 'pointer' : 'default', userSelect: 'none', display: 'flex', alignItems: 'center', gap: 3, justifyContent: centered ? 'center' : 'flex-start' }}>
+                              onClick={sortable ? () => setSummarySort(p => ({ key: k as 'nom'|'paye'|'invite'|'total', dir: p.key === k && p.dir === 'asc' ? 'desc' : 'asc' })) : undefined}
+                              style={{ cursor: sortable ? 'pointer' : 'default', userSelect: 'none', display: 'flex', alignItems: 'center', gap: 3, justifyContent: k === 'nom' || k === 'repas' ? 'flex-start' : 'center', color: k === 'repas' ? 'var(--text3)' : 'var(--primary)' }}>
                               {label}
-                              {k !== '_' && <span style={{ fontSize: 9, opacity: active ? 1 : 0.5 }}>{active ? (summarySort.dir === 'asc' ? '▲' : '▼') : '⇅'}</span>}
+                              {sortable && <span style={{ fontSize: 9, opacity: active ? 1 : 0.5 }}>{active ? (summarySort.dir === 'asc' ? '▲' : '▼') : '⇅'}</span>}
                             </span>
                           )
                         })}
