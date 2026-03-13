@@ -87,17 +87,12 @@ select {
 
 .acm-sidebar-logo {
   display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 18px 6px 14px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 18px 8px 16px;
   border-bottom: 1px solid var(--border);
   margin-bottom: 8px;
-  min-width: 0;
-}
-
-.acm-sidebar-logo-text {
-  min-width: 0;
-  overflow: hidden;
 }
 
 .acm-nav { flex: 1; display: flex; flex-direction: column; gap: 2px; padding: 4px 0; }
@@ -175,9 +170,11 @@ input:focus, select:focus { outline: none; border-color: var(--primary) !importa
 /* Responsive collapse sidebar */
 @media (max-width: 900px) {
   :root { --sidebar-w: 60px; }
-  .acm-sidebar { width: 60px; }
+  .acm-sidebar { width: 60px; align-items: center; }
+  .acm-sidebar-logo { align-items: center; padding: 14px 0; }
+  .acm-sidebar-logo div { display: none; }
   .acm-nav-item span.nav-label { display: none; }
-  .acm-sidebar-logo-text { display: none; }
+  .acm-nav-item { justify-content: center; padding: 10px; }
   .acm-sidebar-footer { display: none; }
   .acm-topbar { padding: 0 16px; }
   .acm-main { padding: 20px 16px 40px; }
