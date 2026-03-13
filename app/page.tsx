@@ -459,18 +459,18 @@ export default function Home() {
 
                 <div style={S.card}>
                   <div style={{ ...S.cardHeader, marginBottom: 0 }}>
-                    <span style={S.cardTitle}>Repas récents</span>
+                    <span style={S.cardTitle}>Derniers ajouts</span>
                     <span style={S.badge}>{meals.length} au total</span>
                   </div>
                   <div style={S.tableWrap} className="acm-tbl">
-                    {meals.slice(0, 10).length === 0 ? (
+                    {meals.slice(0, 3).length === 0 ? (
                       <div style={S.emptyState}>Aucun repas enregistré.</div>
                     ) : (
                       <>
                         <div style={S.tableHead}>
                           <span>Date</span><span>Salarié</span><span>Type</span><span>Commentaire</span><span></span>
                         </div>
-                        {meals.slice(0, 10).map(m => (
+                        {meals.slice(0, 3).map(m => (
                           <MealRow key={m.id} meal={m} empName={getEmpName(m.employee_id)} onEdit={() => setEditMeal(m)} onDelete={() => deleteMeal(m.id)} />
                         ))}
                       </>
