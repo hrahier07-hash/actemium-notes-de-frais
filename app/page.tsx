@@ -372,7 +372,7 @@ export default function Home() {
                     </div>
                   </div>
 
-                  <div className="acm-grid2" style={{ marginBottom: 16 }}>
+                  <div className="acm-grid2" style={{ marginBottom: 16, alignItems: 'end' }}>
                     <div>
                       <label style={S.label}>Commentaire <span style={{ color: 'var(--text3)', fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>(laissez vide pour auto)</span></label>
                       <input style={S.input} value={mForm.commentaire} placeholder={genCommentaire(mForm.type, mForm.date)} onChange={e => setMForm(f => ({ ...f, commentaire: e.target.value }))} />
