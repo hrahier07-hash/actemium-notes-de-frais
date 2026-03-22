@@ -763,6 +763,8 @@ export default function Home() {
                 </div>
               )
             })()}
+
+            {tab === 'salaries' && (
               <div style={{ display: 'grid', gap: 20 }}>
                 <div><h1 style={S.pageTitle}>Salariés</h1><p style={S.pageSub}>Gérez les collaborateurs actifs</p></div>
                 <div style={S.card}>
