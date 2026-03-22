@@ -72,7 +72,7 @@ function SearchInput({ value, onChange, placeholder, inputStyle }: { value: stri
   )
 }
 
-type Tab = 'saisie' | 'mensuel' | 'salaries'
+type Tab = 'saisie' | 'mensuel' | 'salaries' | 'export'
 
 const IMPUTATIONS = [
   { label: 'Vélizy',     color: '#a8e6a3' },
@@ -109,6 +109,9 @@ export default function Home() {
   const [empSearch, setEmpSearch] = useState('')
   const [summarySort, setSummarySort] = useState<{ key: 'nom' | 'paye' | 'invite' | 'total'; dir: 'asc' | 'desc' }>({ key: 'nom', dir: 'asc' })
   const [confirmDelEmp, setConfirmDelEmp] = useState<Employee | null>(null)
+  const nowD = new Date()
+  const [exportMonth, setExportMonth] = useState(nowD.getMonth())
+  const [exportYear, setExportYear] = useState(nowD.getFullYear())
 
   function showToast(msg: string, type: 'ok' | 'err' = 'ok') {
     setToast({ msg, type })
@@ -285,6 +288,7 @@ export default function Home() {
           {([
             { key: 'saisie',   icon: '✎', label: 'Saisie repas' },
             { key: 'mensuel',  icon: '◫', label: 'Vue mensuelle' },
+            { key: 'export',   icon: '⬇', label: 'Export' },
             { key: 'salaries', icon: '☰', label: 'Salariés' },
           ] as { key: Tab; icon: string; label: string }[]).map(item => (
             <button key={item.key} onClick={() => setTab(item.key)}
@@ -303,7 +307,7 @@ export default function Home() {
       <div className="acm-main-wrapper">
         <div className="acm-topbar">
           <span style={{ fontWeight: 600, fontSize: 14, color: 'var(--text)', letterSpacing: '-.01em' }}>
-            {tab === 'saisie' ? 'Saisie des repas' : tab === 'mensuel' ? 'Vue mensuelle' : 'Gestion des salariés'}
+            {tab === 'saisie' ? 'Saisie des repas' : tab === 'mensuel' ? 'Vue mensuelle' : tab === 'export' ? 'Export' : 'Gestion des salariés'}
           </span>
           <span style={{ height: 16, width: 1, background: 'var(--border2)', margin: '0 4px' }} />
           <span style={{ fontSize: 12, color: 'var(--text3)' }}>Actemium — Notes de frais</span>
@@ -535,7 +539,7 @@ export default function Home() {
                       <div style={{ display: 'grid', gridTemplateColumns: '180px 1fr 72px 72px 72px', gap: 12, padding: '8px 12px 10px', borderBottom: '1.5px solid var(--border)', fontSize: 11, fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '.06em', color: 'var(--primary)' }}>
                         {([
                           { k: 'nom', label: 'Nom / Prénom', sortable: true },
-                          { k: 'repas', label: 'Repas du mois', sortable: false },
+                          { k: 'repas', label: 'Commentaire', sortable: false },
                           { k: 'paye', label: 'Payé', sortable: true },
                           { k: 'invite', label: 'Invité', sortable: true },
                           { k: 'total', label: 'Total', sortable: true },
@@ -568,11 +572,18 @@ export default function Home() {
                               {empMeals.map(m => {
                                 const fmtDate = m.date ? new Date(m.date+'T12:00:00').toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'}) : ''
                                 const bg = impColorLight(m.count_color || '#a8e6a3')
+                                let chipLabel: string
+                                if (m.type === 'paye') {
+                                  chipLabel = fmtDate
+                                } else if (m.invited_by) {
+                                  const inv = employees.find(e => e.id === m.invited_by)
+                                  chipLabel = inv ? `invité par ${inv.prenom} ${inv.nom} le ${fmtDate}` : `invité le ${fmtDate}`
+                                } else {
+                                  chipLabel = `invité le ${fmtDate}`
+                                }
                                 return (
                                   <div key={m.id} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '4px 8px 4px 9px', borderRadius: 7, fontSize: 12, background: bg, border: '1px solid rgba(0,0,0,.07)', color: '#1a1a1a' }}>
-                                    <span style={{ fontSize: 11, color: 'var(--text3)', fontWeight: 500, letterSpacing: '.01em' }}>{fmtDate}</span>
-                                    <span style={{ fontWeight: 700, fontSize: 11.5, color: '#166534' }}>{m.type === 'paye' ? 'Payé' : 'Invité'}</span>
-                                    {m.commentaire && <span style={{ fontSize: 11.5, color: m.commentaire_color || 'var(--text2)', maxWidth: 140, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.commentaire}</span>}
+                                    <span style={{ fontSize: 11.5, color: 'var(--text)', fontWeight: 500 }}>{chipLabel}</span>
                                     <button onClick={() => setEditMeal(m)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0 1px', opacity: 0.4, fontSize: 12, lineHeight: 1, transition: 'opacity .1s' }} onMouseEnter={ev => ev.currentTarget.style.opacity='1'} onMouseLeave={ev => ev.currentTarget.style.opacity='.4'} title="Modifier">✎</button>
                                     <button onClick={() => deleteMeal(m.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0 1px', opacity: 0.35, color: 'var(--red)', fontSize: 12, lineHeight: 1, transition: 'opacity .1s' }} onMouseEnter={ev => ev.currentTarget.style.opacity='1'} onMouseLeave={ev => ev.currentTarget.style.opacity='.35'} title="Supprimer">×</button>
                                   </div>
@@ -602,6 +613,156 @@ export default function Home() {
                 })()}
               </div>
             )}
+
+            {tab === 'export' && (() => {
+              // ── helpers ──────────────────────────────────────────────
+              const fmtDM = (d: string) => new Date(d+'T12:00:00').toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'})
+
+              const buildComment = (empId: string, ms: Meal[]) => {
+                const paid = ms.filter(m => m.employee_id === empId && m.type === 'paye').sort((a,b)=>a.date.localeCompare(b.date))
+                const inv  = ms.filter(m => m.employee_id === empId && m.type === 'invite').sort((a,b)=>a.date.localeCompare(b.date))
+                const parts: string[] = [
+                  ...paid.map(m => fmtDM(m.date)),
+                  ...inv.map(m => {
+                    const day = fmtDM(m.date)
+                    if (m.invited_by) {
+                      const inviter = employees.find(e => e.id === m.invited_by)
+                      if (inviter) return `invité par ${inviter.prenom} ${inviter.nom} le ${day}`
+                    }
+                    return `invité le ${day}`
+                  }),
+                ]
+                return parts.join(', ')
+              }
+
+              const exportMeals = meals.filter(m => {
+                const target = m.target_month ? m.target_month.slice(0,7) : m.date.slice(0,7)
+                return target === `${exportYear}-${String(exportMonth+1).padStart(2,'0')}`
+              })
+
+              const empWithMeals = employees.filter(e => exportMeals.some(m => m.employee_id === e.id))
+                .sort((a,b) => a.nom.localeCompare(b.nom))
+
+              const rows = empWithMeals.map(e => {
+                const paye   = exportMeals.filter(m => m.employee_id === e.id && m.type === 'paye').length
+                const invite = exportMeals.filter(m => m.employee_id === e.id && m.type === 'invite').length
+                return {
+                  emp: e,
+                  paye,
+                  invite,
+                  total: paye + invite,
+                  comment: buildComment(e.id, exportMeals),
+                }
+              })
+
+              const monthLabel = `${MONTHS[exportMonth]} ${exportYear}`
+
+              async function doExcelExport() {
+                const XLSX = await import('xlsx')
+                const data = rows.map(r => ({
+                  'Nom':           r.emp.nom,
+                  'Prénom':        r.emp.prenom,
+                  'Repas payés':   r.paye,
+                  'Repas invité':  r.invite,
+                  'Total':         r.total,
+                  'Commentaires':  r.comment,
+                }))
+                const ws = XLSX.utils.json_to_sheet(data)
+                // Column widths
+                ws['!cols'] = [{ wch: 22 }, { wch: 16 }, { wch: 14 }, { wch: 14 }, { wch: 8 }, { wch: 80 }]
+                const wb = XLSX.utils.book_new()
+                XLSX.utils.book_append_sheet(wb, ws, monthLabel)
+                XLSX.writeFile(wb, `repas_${exportYear}_${String(exportMonth+1).padStart(2,'0')}.xlsx`)
+              }
+
+              function doCSVExport() {
+                const header = ['Nom','Prénom','Repas payés','Repas invité','Total','Commentaires']
+                const lines = [header, ...rows.map(r => [r.emp.nom, r.emp.prenom, r.paye, r.invite, r.total, r.comment])]
+                const csv = lines.map(l => l.map(c => `"${String(c).replace(/"/g,'""')}"`).join(';')).join('\n')
+                const blob = new Blob(['\uFEFF'+csv], { type: 'text/csv;charset=utf-8;' })
+                const url = URL.createObjectURL(blob)
+                const a = document.createElement('a'); a.href = url; a.download = `repas_${exportYear}_${String(exportMonth+1).padStart(2,'0')}.csv`
+                a.click(); URL.revokeObjectURL(url)
+              }
+
+              return (
+                <div style={{ display: 'grid', gap: 20 }}>
+                  <div>
+                    <h1 style={S.pageTitle}>Export</h1>
+                    <p style={S.pageSub}>Exportez les repas par mois de rattachement</p>
+                  </div>
+
+                  {/* ── Sélecteur mois ── */}
+                  <div style={S.card}>
+                    <span style={S.cardTitle}>Mois à exporter</span>
+                    <div style={{ display: 'flex', gap: 12, marginTop: 16, flexWrap: 'wrap', alignItems: 'center' }}>
+                      <div>
+                        <label style={S.label}>Mois</label>
+                        <select style={{ ...S.input, width: 160 }} value={exportMonth} onChange={e => setExportMonth(Number(e.target.value))}>
+                          {MONTHS.map((m, i) => <option key={i} value={i}>{m}</option>)}
+                        </select>
+                      </div>
+                      <div>
+                        <label style={S.label}>Année</label>
+                        <select style={{ ...S.input, width: 110 }} value={exportYear} onChange={e => setExportYear(Number(e.target.value))}>
+                          {[2024,2025,2026,2027].map(y => <option key={y} value={y}>{y}</option>)}
+                        </select>
+                      </div>
+                      <div style={{ alignSelf: 'flex-end', display: 'flex', gap: 10 }}>
+                        <button style={{ ...S.btnPrimary, display: 'flex', alignItems: 'center', gap: 7 }}
+                          onClick={doExcelExport} disabled={rows.length === 0}>
+                          ⬇ Excel (.xlsx)
+                        </button>
+                        <button style={{ ...S.btnGhost, display: 'flex', alignItems: 'center', gap: 7 }}
+                          onClick={doCSVExport} disabled={rows.length === 0}>
+                          ⬇ CSV / Google Sheets
+                        </button>
+                      </div>
+                    </div>
+                    {rows.length === 0 && (
+                      <div style={{ ...S.emptyState, marginTop: 16 }}>Aucun repas pour {monthLabel}.</div>
+                    )}
+                  </div>
+
+                  {/* ── Prévisualisation ── */}
+                  {rows.length > 0 && (
+                    <div style={S.card}>
+                      <div style={{ ...S.cardHeader, marginBottom: 12 }}>
+                        <span style={S.cardTitle}>Aperçu — {monthLabel}</span>
+                        <span style={{ fontSize: 12, color: 'var(--text3)' }}>{rows.length} salarié{rows.length > 1 ? 's' : ''} · {exportMeals.length} repas</span>
+                      </div>
+                      {/* header */}
+                      <div style={{ display: 'grid', gridTemplateColumns: '160px 120px 90px 90px 60px 1fr', gap: 10, padding: '8px 12px 10px', borderBottom: '1.5px solid var(--border)', fontSize: 11, fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '.06em', color: 'var(--primary)' }}>
+                        <span>Nom</span><span>Prénom</span>
+                        <span style={{ textAlign:'center' }}>Payés</span>
+                        <span style={{ textAlign:'center' }}>Invités</span>
+                        <span style={{ textAlign:'center' }}>Total</span>
+                        <span>Commentaires</span>
+                      </div>
+                      {rows.map(r => (
+                        <div key={r.emp.id} style={{ display: 'grid', gridTemplateColumns: '160px 120px 90px 90px 60px 1fr', gap: 10, alignItems: 'center', padding: '12px 12px', borderBottom: '1px solid var(--border)' }}
+                          className="acm-summary-row">
+                          <span style={{ fontWeight: 600, fontSize: 13 }}>{r.emp.nom}</span>
+                          <span style={{ fontSize: 13 }}>{r.emp.prenom}</span>
+                          <span style={{ textAlign:'center', fontWeight: 700, fontSize: 14 }}>{r.paye}</span>
+                          <span style={{ textAlign:'center', fontWeight: 700, fontSize: 14 }}>{r.invite}</span>
+                          <span style={{ textAlign:'center', fontWeight: 800, fontSize: 15, color: 'var(--primary)' }}>{r.total}</span>
+                          <span style={{ fontSize: 12, color: 'var(--text2)', lineHeight: 1.5 }}>{r.comment}</span>
+                        </div>
+                      ))}
+                      {/* totaux */}
+                      <div style={{ display: 'grid', gridTemplateColumns: '160px 120px 90px 90px 60px 1fr', gap: 10, alignItems: 'center', padding: '12px 12px', borderTop: '2px solid var(--primary)', background: 'var(--primary-light)', borderRadius: '0 0 12px 12px' }}>
+                        <span style={{ fontWeight: 700, color: 'var(--primary)', fontSize: 12, textTransform: 'uppercase' as const, letterSpacing: '.05em', gridColumn: '1/3' }}>Total</span>
+                        <span style={{ textAlign:'center', fontWeight: 800, fontSize: 15, color: 'var(--primary)' }}>{rows.reduce((a,r)=>a+r.paye,0)}</span>
+                        <span style={{ textAlign:'center', fontWeight: 800, fontSize: 15, color: 'var(--primary)' }}>{rows.reduce((a,r)=>a+r.invite,0)}</span>
+                        <span style={{ textAlign:'center', fontWeight: 900, fontSize: 17, color: 'var(--primary)' }}>{rows.reduce((a,r)=>a+r.total,0)}</span>
+                        <span />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )
+            })()}
 
             {tab === 'salaries' && (
               <div style={{ display: 'grid', gap: 20 }}>
