@@ -77,7 +77,7 @@ function SearchInput({ value, onChange, placeholder, inputStyle }: { value: stri
   )
 }
 
-type Tab = 'saisie' | 'mensuel' | 'salaries' | 'export'
+type Tab = 'saisie' | 'mensuel' | 'salaries' | 'export' | 'profil'
 
 const IMPUTATIONS = [
   { label: 'Vélizy',     color: '#a8e6a3' },
@@ -410,7 +410,7 @@ export default function Home() {
 
           {/* Bouton Profil */}
           <button
-            onClick={() => setShowProfile(true)}
+            onClick={() => setTab('profil')}
             style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 10, border: '1px solid var(--border)', background: 'var(--bg2)', cursor: 'pointer', marginBottom: 6, transition: 'all .15s ease', textAlign: 'left', fontFamily: 'inherit' }}
             onMouseEnter={e => (e.currentTarget.style.background = 'var(--primary-light)')}
             onMouseLeave={e => (e.currentTarget.style.background = 'var(--bg2)')}
@@ -444,47 +444,6 @@ export default function Home() {
           </button>
         </div>
 
-        {/* ── Modal Profil ── */}
-        {showProfile && (
-          <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }} onClick={() => setShowProfile(false)}>
-            <div style={{ background: 'white', borderRadius: 16, padding: 28, width: '100%', maxWidth: 420, boxShadow: '0 20px 60px rgba(0,0,0,0.2)', animation: 'profileIn .2s ease' }} onClick={e => e.stopPropagation()}>
-              <style>{`@keyframes profileIn { from{opacity:0;transform:scale(0.95)} to{opacity:1;transform:scale(1)} }`}</style>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-                <h3 style={{ fontSize: 17, fontWeight: 700, color: 'var(--text)', letterSpacing: '-.02em' }}>Mon profil</h3>
-                <button onClick={() => setShowProfile(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text3)', fontSize: 20, lineHeight: 1 }}>×</button>
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 24, gap: 10 }}>
-                <div style={{ width: 80, height: 80, borderRadius: '50%', background: profile.avatar ? 'transparent' : 'linear-gradient(135deg,#3282DE,#9AC00C)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', border: '3px solid var(--border)', cursor: 'pointer', position: 'relative' }} onClick={() => fileInputRef.current?.click()}>
-                  {profile.avatar
-                    ? <img src={profile.avatar} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" />
-                    : <span style={{ color: 'white', fontSize: 28, fontWeight: 700 }}>{(profile.prenom?.[0] || user?.email?.[0] || '?').toUpperCase()}</span>
-                  }
-                </div>
-                <input ref={fileInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleAvatarChange} />
-                <span style={{ fontSize: 12, color: 'var(--text3)' }}>Cliquez sur la photo pour changer</span>
-              </div>
-              <div style={{ marginBottom: 14 }}>
-                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text)', marginBottom: 5 }}>Email</label>
-                <div style={{ padding: '10px 12px', background: 'var(--bg2)', borderRadius: 8, fontSize: 13, color: 'var(--text2)', border: '1px solid var(--border)' }}>{user?.email || '—'}</div>
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 14 }}>
-                {[{ label: 'Prénom', key: 'prenom', placeholder: 'Jean' }, { label: 'Nom', key: 'nom', placeholder: 'DUPONT' }].map(f => (
-                  <div key={f.key}>
-                    <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text)', marginBottom: 5 }}>{f.label}</label>
-                    <input style={{ width: '100%', padding: '10px 12px', border: '1.5px solid var(--border)', borderRadius: 8, fontSize: 13, fontFamily: 'inherit', color: 'var(--text)', outline: 'none', background: 'white' }} placeholder={f.placeholder} value={profile[f.key as keyof typeof profile]} onChange={e => setProfile(p => ({ ...p, [f.key]: e.target.value }))} onFocus={e => (e.target.style.borderColor='#3282DE')} onBlur={e => (e.target.style.borderColor='var(--border)')} />
-                  </div>
-                ))}
-              </div>
-              <div style={{ marginBottom: 24 }}>
-                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text)', marginBottom: 5 }}>Poste</label>
-                <input style={{ width: '100%', padding: '10px 12px', border: '1.5px solid var(--border)', borderRadius: 8, fontSize: 13, fontFamily: 'inherit', color: 'var(--text)', outline: 'none', background: 'white' }} placeholder="Assistant administratif et financier" value={profile.poste} onChange={e => setProfile(p => ({ ...p, poste: e.target.value }))} onFocus={e => (e.target.style.borderColor='#3282DE')} onBlur={e => (e.target.style.borderColor='var(--border)')} />
-              </div>
-              <button onClick={saveProfile} disabled={profileSaving} style={{ width: '100%', padding: '12px', background: profileSaved ? '#059669' : 'linear-gradient(135deg,#3282DE,#2670c7)', color: 'white', border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 700, fontFamily: 'inherit', cursor: 'pointer', transition: 'all .2s ease' }}>
-                {profileSaving ? 'Enregistrement...' : profileSaved ? '✓ Profil sauvegardé' : 'Enregistrer'}
-              </button>
-            </div>
-          </div>
-        )}
       </aside>
 
       {/* ── Main wrapper ── */}
@@ -497,7 +456,7 @@ export default function Home() {
           </div>
           {/* Page title */}
           <span className="acm-topbar-page" style={{ fontWeight: 600, fontSize: 14, color: 'var(--text)', letterSpacing: '-.01em' }}>
-            {tab === 'saisie' ? 'Saisie des repas' : tab === 'mensuel' ? 'Vue mensuelle' : tab === 'export' ? 'Export' : 'Gestion des salariés'}
+            {tab === 'saisie' ? 'Saisie des repas' : tab === 'mensuel' ? 'Vue mensuelle' : tab === 'export' ? 'Export' : tab === 'profil' ? 'Mon profil' : 'Gestion des salariés'}
           </span>
           <span className="acm-topbar-breadcrumb" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <span style={{ height: 16, width: 1, background: 'var(--border2)' }} />
@@ -856,12 +815,15 @@ export default function Home() {
               const rows = empWithMeals.map(e => {
                 const paye   = exportMeals.filter(m => m.employee_id === e.id && m.type === 'paye').length
                 const invite = exportMeals.filter(m => m.employee_id === e.id && m.type === 'invite').length
+                const ms = exportMeals.filter(m => m.employee_id === e.id)
+                const countColor = ms.length > 0 ? (ms[0].count_color || '#a8e6a3') : '#a8e6a3'
                 return {
                   emp: e,
                   paye,
                   invite,
                   total: paye + invite,
                   comment: buildComment(e.id, exportMeals),
+                  countColor,
                 }
               })
 
@@ -869,20 +831,54 @@ export default function Home() {
 
               async function doExcelExport() {
                 const XLSX = await import('xlsx')
-                const data = rows.map(r => ({
-                  'Nom':           r.emp.nom,
-                  'Prénom':        r.emp.prenom,
-                  'Repas payés':   r.paye,
-                  'Repas invité':  r.invite,
-                  'Total':         r.total,
-                  'Commentaires':  r.comment,
-                }))
-                const ws = XLSX.utils.json_to_sheet(data)
-                // Column widths
+
+                // Couleurs texte par imputation (count_color → rgb Excel)
+                const IMPUTATION_TEXT_COLORS: Record<string, string> = {
+                  '#a8e6a3': '00000000', // Vélizy → noir
+                  '#a3d4f5': '001A56DB', // Chanteloup → bleu
+                  '#fde89a': '00C05C00', // Verneuil → orange
+                  '#f5b8c8': '00C2185B', // Cantine → rose
+                }
+
+                // Couleurs récupérées depuis rows (countColor par salarié)
+
+                const headers = ['Nom', 'Prénom', 'Repas payés', 'Repas invité', 'Total', 'Commentaires']
+                const dataRows = rows.map(r => [r.emp.nom, r.emp.prenom, r.paye, r.invite, r.total, r.comment])
+
+                const ws = XLSX.utils.aoa_to_sheet([headers, ...dataRows])
+
+                // Appliquer les couleurs de texte sur chaque ligne
+                rows.forEach((r, rowIdx) => {
+                  const xlsxRow = rowIdx + 2 // +1 header, +1 base-1
+                  const textColor = IMPUTATION_TEXT_COLORS[r.countColor] || '00000000'
+                  headers.forEach((_, colIdx) => {
+                    const cellAddr = XLSX.utils.encode_cell({ r: xlsxRow - 1, c: colIdx })
+                    if (!ws[cellAddr]) ws[cellAddr] = { v: '', t: 's' }
+                    ws[cellAddr].s = {
+                      font: {
+                        color: { rgb: textColor },
+                        bold: colIdx === 4, // Total en gras
+                      },
+                      alignment: { vertical: 'center' }
+                    }
+                  })
+                })
+
+                // Style header
+                headers.forEach((_, colIdx) => {
+                  const cellAddr = XLSX.utils.encode_cell({ r: 0, c: colIdx })
+                  if (!ws[cellAddr]) ws[cellAddr] = { v: '', t: 's' }
+                  ws[cellAddr].s = {
+                    font: { bold: true, color: { rgb: '00FFFFFF' } },
+                    fill: { fgColor: { rgb: '003282DE' } },
+                    alignment: { horizontal: 'center', vertical: 'center' }
+                  }
+                })
+
                 ws['!cols'] = [{ wch: 22 }, { wch: 16 }, { wch: 14 }, { wch: 14 }, { wch: 8 }, { wch: 80 }]
                 const wb = XLSX.utils.book_new()
                 XLSX.utils.book_append_sheet(wb, ws, monthLabel)
-                XLSX.writeFile(wb, `repas_${exportYear}_${String(exportMonth+1).padStart(2,'0')}.xlsx`)
+                XLSX.writeFile(wb, `repas_${exportYear}_${String(exportMonth+1).padStart(2,'0')}.xlsx`, { cellStyles: true })
               }
 
               function doCSVExport() {
@@ -1013,6 +1009,73 @@ export default function Home() {
                     </div>
                   ))}
                   {filteredEmpForAdmin.length === 0 && <div style={S.emptyState}>Aucun résultat pour "{empSearch}"</div>}
+                </div>
+              </div>
+            )}
+
+            {tab === 'profil' && (
+              <div style={{ display: 'grid', gap: 20, maxWidth: 520 }}>
+                <div>
+                  <h1 style={S.pageTitle}>Mon profil</h1>
+                  <p style={S.pageSub}>Gérez vos informations personnelles</p>
+                </div>
+                <div style={S.card} className="acm-card-mobile">
+                  {/* Avatar */}
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 28, gap: 10 }}>
+                    <div
+                      style={{ width: 88, height: 88, borderRadius: '50%', background: profile.avatar ? 'transparent' : 'linear-gradient(135deg,#3282DE,#9AC00C)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', border: '3px solid var(--border)', cursor: 'pointer', position: 'relative' }}
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      {profile.avatar
+                        ? <img src={profile.avatar} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" />
+                        : <span style={{ color: 'white', fontSize: 32, fontWeight: 700 }}>{(profile.prenom?.[0] || user?.email?.[0] || '?').toUpperCase()}</span>
+                      }
+                    </div>
+                    <input ref={fileInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleAvatarChange} />
+                    <span style={{ fontSize: 12, color: 'var(--text3)' }}>Cliquez sur la photo pour changer</span>
+                  </div>
+
+                  {/* Email */}
+                  <div style={{ marginBottom: 16 }}>
+                    <label style={S.label}>Email</label>
+                    <div style={{ padding: '11px 14px', background: 'var(--bg2)', borderRadius: 10, fontSize: 14, color: 'var(--text2)', border: '1px solid var(--border)' }}>
+                      {user?.email || '—'}
+                    </div>
+                  </div>
+
+                  {/* Prénom + Nom */}
+                  <div className="acm-grid2" style={{ marginBottom: 16 }}>
+                    {[{ label: 'Prénom', key: 'prenom', placeholder: 'Jean' }, { label: 'Nom', key: 'nom', placeholder: 'DUPONT' }].map(f => (
+                      <div key={f.key}>
+                        <label style={S.label}>{f.label}</label>
+                        <input
+                          style={S.input}
+                          placeholder={f.placeholder}
+                          value={profile[f.key as keyof typeof profile]}
+                          onChange={e => setProfile(p => ({ ...p, [f.key]: e.target.value }))}
+                        />
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Poste */}
+                  <div style={{ marginBottom: 24 }}>
+                    <label style={S.label}>Poste</label>
+                    <input
+                      style={S.input}
+                      placeholder="Assistant administratif et financier"
+                      value={profile.poste}
+                      onChange={e => setProfile(p => ({ ...p, poste: e.target.value }))}
+                    />
+                  </div>
+
+                  <button
+                    onClick={saveProfile}
+                    disabled={profileSaving}
+                    style={{ padding: '12px 28px', background: profileSaved ? '#059669' : 'linear-gradient(135deg,#3282DE,#2670c7)', color: 'white', border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 700, fontFamily: 'inherit', cursor: 'pointer', transition: 'all .2s ease', boxShadow: '0 4px 14px rgba(50,130,222,0.25)' }}
+                  >
+                    {profileSaving ? 'Enregistrement...' : profileSaved ? '✓ Profil sauvegardé' : 'Enregistrer les modifications'}
+                  </button>
                 </div>
               </div>
             )}
