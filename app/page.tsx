@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback, useMemo } from 'react'
+import { useEffect, useState, useCallback, useMemo, useRef } from 'react'
 import { supabase, type Employee, type Meal } from '@/lib/supabase'
 
 const MONTHS = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre']
@@ -119,6 +119,45 @@ export default function Home() {
   const nowD = new Date()
   const [exportMonth, setExportMonth] = useState(nowD.getMonth())
   const [exportYear, setExportYear] = useState(nowD.getFullYear())
+
+  // ── Profil utilisateur ──
+  const [user, setUser] = useState<{ email: string; id: string } | null>(null)
+  const [profile, setProfile] = useState({ nom: '', prenom: '', poste: '', avatar: '' })
+  const [showProfile, setShowProfile] = useState(false)
+  const [profileSaving, setProfileSaving] = useState(false)
+  const [profileSaved, setProfileSaved] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      if (data.user) {
+        setUser({ email: data.user.email || '', id: data.user.id })
+        const meta = data.user.user_metadata || {}
+        setProfile({ nom: meta.nom || '', prenom: meta.prenom || '', poste: meta.poste || '', avatar: meta.avatar || '' })
+      }
+    })
+  }, [])
+
+  async function saveProfile() {
+    setProfileSaving(true)
+    await supabase.auth.updateUser({ data: { nom: profile.nom, prenom: profile.prenom, poste: profile.poste, avatar: profile.avatar } })
+    setProfileSaving(false)
+    setProfileSaved(true)
+    setTimeout(() => setProfileSaved(false), 2000)
+  }
+
+  async function handleAvatarChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = (ev) => { setProfile(p => ({ ...p, avatar: ev.target?.result as string })) }
+    reader.readAsDataURL(file)
+  }
+
+  async function handleLogout() {
+    await supabase.auth.signOut()
+    window.location.href = '/login'
+  }
 
   function showToast(msg: string, type: 'ok' | 'err' = 'ok') {
     setToast({ msg, type })
@@ -364,9 +403,88 @@ export default function Home() {
             </button>
           ))}
         </nav>
-        <div className="acm-sidebar-footer">
-          <div style={{ fontWeight: 500, color: 'var(--text2)' }}>{employees.length} salarié{employees.length !== 1 ? 's' : ''} actifs</div>
+        <div className="acm-sidebar-footer" style={{ padding: '12px 12px 16px', borderTop: '1px solid var(--border)', marginTop: 'auto' }}>
+          <div style={{ fontSize: 11, color: 'var(--text3)', fontWeight: 500, padding: '0 4px 8px', letterSpacing: '.02em', textTransform: 'uppercase' }}>
+            {employees.length} salarié{employees.length !== 1 ? 's' : ''} actifs
+          </div>
+
+          {/* Bouton Profil */}
+          <button
+            onClick={() => setShowProfile(true)}
+            style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 10, border: '1px solid var(--border)', background: 'var(--bg2)', cursor: 'pointer', marginBottom: 6, transition: 'all .15s ease', textAlign: 'left', fontFamily: 'inherit' }}
+            onMouseEnter={e => (e.currentTarget.style.background = 'var(--primary-light)')}
+            onMouseLeave={e => (e.currentTarget.style.background = 'var(--bg2)')}
+          >
+            <div style={{ width: 32, height: 32, borderRadius: '50%', flexShrink: 0, background: profile.avatar ? 'transparent' : 'linear-gradient(135deg,#3282DE,#9AC00C)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', border: '2px solid var(--border)' }}>
+              {profile.avatar
+                ? <img src={profile.avatar} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" />
+                : <span style={{ color: 'white', fontSize: 13, fontWeight: 700 }}>{(profile.prenom?.[0] || user?.email?.[0] || '?').toUpperCase()}</span>
+              }
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                {profile.prenom && profile.nom ? `${profile.prenom} ${profile.nom}` : 'Mon profil'}
+              </div>
+              <div style={{ fontSize: 11, color: 'var(--text3)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                {profile.poste || user?.email || ''}
+              </div>
+            </div>
+            <span style={{ color: 'var(--text3)', fontSize: 12 }}>›</span>
+          </button>
+
+          {/* Bouton Déconnexion */}
+          <button
+            onClick={handleLogout}
+            style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px', borderRadius: 10, border: '1px solid var(--border)', background: 'transparent', cursor: 'pointer', color: 'var(--text2)', fontSize: 13, fontWeight: 500, fontFamily: 'inherit', transition: 'all .15s ease' }}
+            onMouseEnter={e => { e.currentTarget.style.background='#fff5f5'; e.currentTarget.style.color='#e53e3e'; e.currentTarget.style.borderColor='#fed7d7' }}
+            onMouseLeave={e => { e.currentTarget.style.background='transparent'; e.currentTarget.style.color='var(--text2)'; e.currentTarget.style.borderColor='var(--border)' }}
+          >
+            <span style={{ fontSize: 15 }}>⎋</span>
+            Se déconnecter
+          </button>
         </div>
+
+        {/* ── Modal Profil ── */}
+        {showProfile && (
+          <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }} onClick={() => setShowProfile(false)}>
+            <div style={{ background: 'white', borderRadius: 16, padding: 28, width: '100%', maxWidth: 420, boxShadow: '0 20px 60px rgba(0,0,0,0.2)', animation: 'profileIn .2s ease' }} onClick={e => e.stopPropagation()}>
+              <style>{`@keyframes profileIn { from{opacity:0;transform:scale(0.95)} to{opacity:1;transform:scale(1)} }`}</style>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+                <h3 style={{ fontSize: 17, fontWeight: 700, color: 'var(--text)', letterSpacing: '-.02em' }}>Mon profil</h3>
+                <button onClick={() => setShowProfile(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text3)', fontSize: 20, lineHeight: 1 }}>×</button>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 24, gap: 10 }}>
+                <div style={{ width: 80, height: 80, borderRadius: '50%', background: profile.avatar ? 'transparent' : 'linear-gradient(135deg,#3282DE,#9AC00C)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', border: '3px solid var(--border)', cursor: 'pointer', position: 'relative' }} onClick={() => fileInputRef.current?.click()}>
+                  {profile.avatar
+                    ? <img src={profile.avatar} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" />
+                    : <span style={{ color: 'white', fontSize: 28, fontWeight: 700 }}>{(profile.prenom?.[0] || user?.email?.[0] || '?').toUpperCase()}</span>
+                  }
+                </div>
+                <input ref={fileInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleAvatarChange} />
+                <span style={{ fontSize: 12, color: 'var(--text3)' }}>Cliquez sur la photo pour changer</span>
+              </div>
+              <div style={{ marginBottom: 14 }}>
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text)', marginBottom: 5 }}>Email</label>
+                <div style={{ padding: '10px 12px', background: 'var(--bg2)', borderRadius: 8, fontSize: 13, color: 'var(--text2)', border: '1px solid var(--border)' }}>{user?.email || '—'}</div>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 14 }}>
+                {[{ label: 'Prénom', key: 'prenom', placeholder: 'Jean' }, { label: 'Nom', key: 'nom', placeholder: 'DUPONT' }].map(f => (
+                  <div key={f.key}>
+                    <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text)', marginBottom: 5 }}>{f.label}</label>
+                    <input style={{ width: '100%', padding: '10px 12px', border: '1.5px solid var(--border)', borderRadius: 8, fontSize: 13, fontFamily: 'inherit', color: 'var(--text)', outline: 'none', background: 'white' }} placeholder={f.placeholder} value={profile[f.key as keyof typeof profile]} onChange={e => setProfile(p => ({ ...p, [f.key]: e.target.value }))} onFocus={e => (e.target.style.borderColor='#3282DE')} onBlur={e => (e.target.style.borderColor='var(--border)')} />
+                  </div>
+                ))}
+              </div>
+              <div style={{ marginBottom: 24 }}>
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text)', marginBottom: 5 }}>Poste</label>
+                <input style={{ width: '100%', padding: '10px 12px', border: '1.5px solid var(--border)', borderRadius: 8, fontSize: 13, fontFamily: 'inherit', color: 'var(--text)', outline: 'none', background: 'white' }} placeholder="Assistant administratif et financier" value={profile.poste} onChange={e => setProfile(p => ({ ...p, poste: e.target.value }))} onFocus={e => (e.target.style.borderColor='#3282DE')} onBlur={e => (e.target.style.borderColor='var(--border)')} />
+              </div>
+              <button onClick={saveProfile} disabled={profileSaving} style={{ width: '100%', padding: '12px', background: profileSaved ? '#059669' : 'linear-gradient(135deg,#3282DE,#2670c7)', color: 'white', border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 700, fontFamily: 'inherit', cursor: 'pointer', transition: 'all .2s ease' }}>
+                {profileSaving ? 'Enregistrement...' : profileSaved ? '✓ Profil sauvegardé' : 'Enregistrer'}
+              </button>
+            </div>
+          </div>
+        )}
       </aside>
 
       {/* ── Main wrapper ── */}
