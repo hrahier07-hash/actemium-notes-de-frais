@@ -16,8 +16,11 @@ function formatDateShort(d: string) {
   return `${day}/${m}`
 }
 
-function genCommentaire(type: 'paye' | 'invite', date: string, inviterName?: string) {
+const CANTINE_COLOR = '#f5b8c8'
+
+function genCommentaire(type: 'paye' | 'invite', date: string, inviterName?: string, countColor?: string) {
   const label = formatDateShort(date)
+  if (countColor === CANTINE_COLOR) return `Cantine le ${label}`
   if (type === 'paye') return `Repas du ${label}`
   if (inviterName) return `Invité par ${inviterName} le ${label}`
   return `Repas en tant qu'invité le ${label}`
@@ -224,12 +227,12 @@ export default function Home() {
     const emp = empById[mForm.employeeId]
     const inserts: (Partial<Meal> & { target_month?: string })[] = []
     if (mForm.type === 'paye') {
-      const tm = mForm.targetMonth + '-01'; inserts.push({ employee_id: mForm.employeeId, date: mForm.date, type: 'paye', invited_by: null, commentaire: mForm.commentaire || genCommentaire('paye', mForm.date), commentaire_color: mForm.commentaireColor, count_color: mForm.countColor, target_month: tm })
+      const tm = mForm.targetMonth + '-01'; inserts.push({ employee_id: mForm.employeeId, date: mForm.date, type: 'paye', invited_by: null, commentaire: mForm.commentaire || genCommentaire('paye', mForm.date, undefined, mForm.countColor), commentaire_color: mForm.commentaireColor, count_color: mForm.countColor, target_month: tm })
       for (const invId of mForm.invites) {
-        inserts.push({ employee_id: invId, date: mForm.date, type: 'invite', invited_by: mForm.employeeId, commentaire: genCommentaire('invite', mForm.date, `${emp.prenom} ${emp.nom}`), commentaire_color: mForm.commentaireColor, count_color: mForm.countColor, target_month: tm })
+        inserts.push({ employee_id: invId, date: mForm.date, type: 'invite', invited_by: mForm.employeeId, commentaire: genCommentaire('invite', mForm.date, `${emp.prenom} ${emp.nom}`, mForm.countColor), commentaire_color: mForm.commentaireColor, count_color: mForm.countColor, target_month: tm })
       }
     } else {
-      const tm2 = mForm.targetMonth + '-01'; inserts.push({ employee_id: mForm.employeeId, date: mForm.date, type: 'invite', invited_by: null, commentaire: mForm.commentaire || genCommentaire('invite', mForm.date), commentaire_color: mForm.commentaireColor, count_color: mForm.countColor, target_month: tm2 })
+      const tm2 = mForm.targetMonth + '-01'; inserts.push({ employee_id: mForm.employeeId, date: mForm.date, type: 'invite', invited_by: null, commentaire: mForm.commentaire || genCommentaire('invite', mForm.date, undefined, mForm.countColor), commentaire_color: mForm.commentaireColor, count_color: mForm.countColor, target_month: tm2 })
     }
     const { error } = await supabase.from('meals').insert(inserts)
     if (error) { showToast('Erreur lors de l\'enregistrement', 'err'); return }
@@ -552,7 +555,7 @@ export default function Home() {
                   <div className="acm-grid2" style={{ marginBottom: 16 }}>
                     <div>
                       <label style={S.label}>Commentaire <span style={{ color: 'var(--text3)', fontWeight: 400, textTransform: 'none', letterSpacing: 0, fontSize: 11 }}> (auto)</span></label>
-                      <input style={S.input} value={mForm.commentaire} placeholder={genCommentaire(mForm.type, mForm.date)} onChange={e => setMForm(f => ({ ...f, commentaire: e.target.value }))} />
+                      <input style={S.input} value={mForm.commentaire} placeholder={genCommentaire(mForm.type, mForm.date, undefined, mForm.countColor)} onChange={e => setMForm(f => ({ ...f, commentaire: e.target.value }))} />
                     </div>
                     <ColorPicker label="Couleur commentaire" value={mForm.commentaireColor} onChange={c => setMForm(f => ({ ...f, commentaireColor: c }))} />
                   </div>
@@ -808,9 +811,14 @@ export default function Home() {
                 const paid = ms.filter(m => m.employee_id === empId && m.type === 'paye').sort((a,b)=>a.date.localeCompare(b.date))
                 const inv  = ms.filter(m => m.employee_id === empId && m.type === 'invite').sort((a,b)=>a.date.localeCompare(b.date))
                 const parts: string[] = [
-                  ...paid.map(m => fmtDM(m.date)),
+                  ...paid.map(m => {
+                    const day = fmtDM(m.date)
+                    if (m.count_color === CANTINE_COLOR) return `Cantine le ${day}`
+                    return day
+                  }),
                   ...inv.map(m => {
                     const day = fmtDM(m.date)
+                    if (m.count_color === CANTINE_COLOR) return `Cantine le ${day}`
                     if (m.invited_by) {
                       const inviter = employees.find(e => e.id === m.invited_by)
                       if (inviter) return `invité par ${inviter.prenom} ${inviter.nom} le ${day}`
