@@ -830,64 +830,53 @@ export default function Home() {
               const monthLabel = `${MONTHS[exportMonth]} ${exportYear}`
 
               async function doExcelExport() {
-                // ExcelJS — seule lib qui supporte vraiment les styles de cellules
-                const ExcelJS = await import('exceljs')
+                // xlsx-js-style : fork de xlsx avec support des styles côté browser
+                const XLSX = await import('xlsx-js-style')
 
-                // Couleurs texte par imputation
-                const IMPUTATION_TEXT_COLORS: Record<string, string> = {
-                  '#a8e6a3': '000000', // Vélizy → noir
-                  '#a3d4f5': '1A56DB', // Chanteloup → bleu
-                  '#fde89a': 'C05C00', // Verneuil → orange
-                  '#f5b8c8': 'C2185B', // Cantine → rose
+                // Couleurs texte par imputation (ARGB sans #)
+                const TEXT_COLORS: Record<string, string> = {
+                  '#a8e6a3': 'FF000000', // Vélizy → noir
+                  '#a3d4f5': 'FF1A56DB', // Chanteloup → bleu
+                  '#fde89a': 'FFC05C00', // Verneuil → orange
+                  '#f5b8c8': 'FFC2185B', // Cantine → rose
                 }
 
-                const wb = new (ExcelJS.default || ExcelJS).Workbook()
-                const ws = wb.addWorksheet(monthLabel)
+                const HEADER_STYLE = {
+                  font: { bold: true, color: { rgb: 'FFFFFF' }, sz: 11 },
+                  fill: { fgColor: { rgb: '3282DE' }, patternType: 'solid' },
+                  alignment: { horizontal: 'center', vertical: 'center' },
+                  border: {
+                    bottom: { style: 'thin', color: { rgb: '1A5FB8' } }
+                  }
+                }
 
-                ws.columns = [
-                  { header: 'Nom',           key: 'nom',    width: 22 },
-                  { header: 'Prénom',         key: 'prenom', width: 16 },
-                  { header: 'Repas payés',    key: 'paye',   width: 14 },
-                  { header: 'Repas invité',   key: 'invite', width: 14 },
-                  { header: 'Total',          key: 'total',  width: 8  },
-                  { header: 'Commentaires',   key: 'comment',width: 80 },
-                ]
+                const headers = ['Nom', 'Prénom', 'Repas payés', 'Repas invité', 'Total', 'Commentaires']
 
-                // Style header (ligne 1)
-                ws.getRow(1).eachCell(cell => {
-                  cell.font = { bold: true, color: { argb: 'FFFFFFFF' } }
-                  cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF3282DE' } }
-                  cell.alignment = { horizontal: 'center', vertical: 'middle' }
+                const headerRow = headers.map(h => ({ v: h, t: 's', s: HEADER_STYLE }))
+
+                const dataRows = rows.map(r => {
+                  const rgb = (TEXT_COLORS[r.countColor] || 'FF000000').replace('FF','')
+                  const cellStyle = (bold = false) => ({
+                    font: { color: { rgb }, bold, sz: 10 },
+                    alignment: { vertical: 'center', wrapText: false }
+                  })
+                  return [
+                    { v: r.emp.nom,    t: 's', s: cellStyle() },
+                    { v: r.emp.prenom, t: 's', s: cellStyle() },
+                    { v: r.paye,       t: 'n', s: cellStyle() },
+                    { v: r.invite,     t: 'n', s: cellStyle() },
+                    { v: r.total,      t: 'n', s: cellStyle(true) },
+                    { v: r.comment,    t: 's', s: cellStyle() },
+                  ]
                 })
 
-                // Ajouter les données avec couleurs
-                rows.forEach(r => {
-                  const textHex = IMPUTATION_TEXT_COLORS[r.countColor] || '000000'
-                  const row = ws.addRow({
-                    nom:     r.emp.nom,
-                    prenom:  r.emp.prenom,
-                    paye:    r.paye,
-                    invite:  r.invite,
-                    total:   r.total,
-                    comment: r.comment,
-                  })
-                  row.eachCell(cell => {
-                    cell.font = { color: { argb: 'FF' + textHex } }
-                  })
-                  // Total en gras
-                  row.getCell('total').font = { bold: true, color: { argb: 'FF' + textHex } }
-                  row.alignment = { vertical: 'middle' }
-                })
+                const ws = XLSX.utils.aoa_to_sheet([headerRow, ...dataRows])
+                ws['!cols'] = [{ wch: 22 }, { wch: 16 }, { wch: 14 }, { wch: 14 }, { wch: 8 }, { wch: 80 }]
+                ws['!rows'] = [{ hpt: 20 }, ...dataRows.map(() => ({ hpt: 16 }))]
 
-                // Télécharger
-                const buffer = await wb.xlsx.writeBuffer()
-                const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
-                const url = URL.createObjectURL(blob)
-                const a = document.createElement('a')
-                a.href = url
-                a.download = `repas_${exportYear}_${String(exportMonth+1).padStart(2,'0')}.xlsx`
-                a.click()
-                URL.revokeObjectURL(url)
+                const wb = XLSX.utils.book_new()
+                XLSX.utils.book_append_sheet(wb, ws, monthLabel)
+                XLSX.writeFile(wb, `repas_${exportYear}_${String(exportMonth+1).padStart(2,'0')}.xlsx`)
               }
 
               function doCSVExport() {
