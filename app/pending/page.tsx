@@ -11,6 +11,23 @@ export default function PendingPage() {
     supabase.auth.getUser().then(({ data }) => {
       if (data.user) setEmail(data.user.email || '')
     })
+
+    // Polling toutes les 5s — dès qu'approuvé, redirige vers l'app
+    const interval = setInterval(async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) { clearInterval(interval); return }
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('approved')
+        .eq('user_id', user.id)
+        .single()
+      if (profile?.approved) {
+        clearInterval(interval)
+        window.location.href = '/'
+      }
+    }, 5000)
+
+    return () => clearInterval(interval)
   }, [])
 
   async function handleLogout() {
