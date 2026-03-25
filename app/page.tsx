@@ -136,6 +136,23 @@ export default function Home() {
         setProfile({ nom: meta.nom || '', prenom: meta.prenom || '', poste: meta.poste || '', avatar: meta.avatar || '' })
       }
     })
+
+    // Vérification toutes les 10s — si accès révoqué, redirige vers /pending
+    const interval = setInterval(async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) { clearInterval(interval); window.location.href = '/login'; return }
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('approved')
+        .eq('user_id', user.id)
+        .single()
+      if (!profile?.approved) {
+        clearInterval(interval)
+        window.location.href = '/pending'
+      }
+    }, 10000)
+
+    return () => clearInterval(interval)
   }, [])
 
   async function saveProfile() {
