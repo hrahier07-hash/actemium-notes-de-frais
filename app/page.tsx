@@ -865,9 +865,9 @@ export default function Home() {
 
                 // Couleurs texte par imputation (ARGB sans #)
                 const TEXT_COLORS: Record<string, string> = {
-                  '#a8e6a3': 'FF1ACC1E', // Vélizy → vert
+                  '#a8e6a3': 'FF000000', // Vélizy → noir
                   '#a3d4f5': 'FF00B0F0', // Chanteloup → bleu
-                  '#fde89a': 'FF000000', // Verneuil → noir
+                  '#fde89a': 'FF1ACC1E', // Verneuil → vert
                   '#7030a0': 'FF7030A0', // Cantine → violet (nouveau)
                   '#f5b8c8': 'FF7030A0', // Cantine → violet (ancien rose)
                 }
