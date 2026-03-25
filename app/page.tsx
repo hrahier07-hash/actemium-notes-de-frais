@@ -16,11 +16,13 @@ function formatDateShort(d: string) {
   return `${day}/${m}`
 }
 
-const CANTINE_COLOR = '#f5b8c8'
+const CANTINE_COLOR = '#7030a0'
+const CANTINE_COLOR_OLD = '#f5b8c8'
+const isCantine = (color?: string | null) => color === CANTINE_COLOR || color === CANTINE_COLOR_OLD
 
 function genCommentaire(type: 'paye' | 'invite', date: string, inviterName?: string, countColor?: string) {
   const label = formatDateShort(date)
-  if (countColor === CANTINE_COLOR) return `Cantine le ${label}`
+  if (isCantine(countColor)) return `Cantine le ${label}`
   if (type === 'paye') return `Repas du ${label}`
   if (inviterName) return `Invité par ${inviterName} le ${label}`
   return `Repas en tant qu'invité le ${label}`
@@ -86,7 +88,7 @@ const IMPUTATIONS = [
   { label: 'Vélizy',     color: '#a8e6a3' },
   { label: 'Chanteloup', color: '#a3d4f5' },
   { label: 'Verneuil',   color: '#fde89a' },
-  { label: 'Cantine',    color: '#f5b8c8' },
+  { label: 'Cantine',    color: '#7030a0' },
 ] as const
 
 function getImputation(color: string | null | undefined) {
@@ -764,9 +766,12 @@ export default function Home() {
                             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
                               {empMeals.map(m => {
                                 const fmtDate = m.date ? new Date(m.date+'T12:00:00').toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'}) : ''
-                                const bg = impColorLight(m.count_color || '#a8e6a3')
+                                const chipColor = isCantine(m.count_color) ? '#7030a0' : (m.count_color || '#a8e6a3')
+                                const bg = impColorLight(chipColor)
                                 let chipLabel: string
-                                if (m.type === 'paye') {
+                                if (isCantine(m.count_color)) {
+                                  chipLabel = `Cantine le ${fmtDate}`
+                                } else if (m.type === 'paye') {
                                   chipLabel = fmtDate
                                 } else if (m.invited_by) {
                                   const inv = employees.find(e => e.id === m.invited_by)
@@ -813,12 +818,12 @@ export default function Home() {
                 const parts: string[] = [
                   ...paid.map(m => {
                     const day = fmtDM(m.date)
-                    if (m.count_color === CANTINE_COLOR) return `Cantine le ${day}`
+                    if (isCantine(m.count_color)) return `Cantine le ${day}`
                     return day
                   }),
                   ...inv.map(m => {
                     const day = fmtDM(m.date)
-                    if (m.count_color === CANTINE_COLOR) return `Cantine le ${day}`
+                    if (isCantine(m.count_color)) return `Cantine le ${day}`
                     if (m.invited_by) {
                       const inviter = employees.find(e => e.id === m.invited_by)
                       if (inviter) return `invité par ${inviter.prenom} ${inviter.nom} le ${day}`
@@ -863,7 +868,8 @@ export default function Home() {
                   '#a8e6a3': 'FF1ACC1E', // Vélizy → vert
                   '#a3d4f5': 'FF00B0F0', // Chanteloup → bleu
                   '#fde89a': 'FF000000', // Verneuil → noir
-                  '#f5b8c8': 'FF7030A0', // Cantine → violet
+                  '#7030a0': 'FF7030A0', // Cantine → violet (nouveau)
+                  '#f5b8c8': 'FF7030A0', // Cantine → violet (ancien rose)
                 }
 
                 const HEADER_STYLE = {
